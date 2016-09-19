@@ -1,2 +1,2 @@
-# Vync
-Online video synchronization with your booboo
+# vync
+Synchronize your distant netflix and chill sessions with your booboo
