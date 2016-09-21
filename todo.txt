@@ -1,0 +1,3 @@
+o Change icon to heart
+o Empty heart when off
+o Full heart when on
