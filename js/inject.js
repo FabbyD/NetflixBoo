@@ -43,47 +43,69 @@ playButton.addEventListener('click', function () {
 	console.log('play/pause button');
 });
 
-window.onclick = function(e){
-  console.log('X: ' + e.clientX + " Y: " + e.clientY);
-}
+// DEBUG //////////////////////
+
+var handle = document.getElementsByClassName('player-scrubber-handle')[0];
+handle.addEventListener('mouseup', function(e){
+  console.log('Drop   - X: ' + e.clientX + " Y: " + e.clientY);
+});
+
+///////////////////////////////
+
+// Convert a time in seconds to a position on the slider
+function time2pos(time){
+  // Get scrubber dimensions
+  var scrubber = document.getElementById('scrubber-component');
+  var rect = scrubber.getBoundingClientRect()
+  var offsetLeft = rect.left;
+  var width = rect.width;
+  
+  // Only used to get video properties
+  // Setting anyting with video crashes the page sadly...
+  var video = document.getElementsByTagName('video')[0];
+  var videoLength = video.seekable.end(0);
+  var prct = time/videoLength;
+  
+  console.log('%: ' + prct);
+  
+  var pos = offsetLeft + Math.round(prct*width);
+  return pos;
+};
 
 // Seek to specified time in seconds
-var seek = function (time) {
-	console.log('Seek time:' + time);
-
+function seek(time){
 	// Get position of target's center
 	var target = document.getElementsByClassName('player-scrubber-target')[0];
-	console.log(target);
   var rect = target.getBoundingClientRect()
-  var centerX = rect.left + Math.floor(rect.width / 2)
-  var centerY = rect.top + Math.floor(rect.height / 2);
+  var centerX = rect.left + Math.round(rect.width / 2)
+  var centerY = rect.top + Math.round(rect.height / 2);
   
-	console.log('CenterX: ' + centerX);
-	console.log('CenterY: ' + centerY);
-
-	//TODO: Calculate position to simulate click
-	var posX = centerX + 100;
+  // Only used to get video properties
+  // Setting anyting with video crashes the page
+  var video = document.getElementsByTagName('video')[0];
+  
+	//TODO: Calculate position to seek to
+	var posX = time2pos(time);
 	var posY = centerY;
 
-	// Make slider appear
-	var moveEvt = mouseEvent("mousemove", 1, 50, 1, 50);
-	window.dispatchEvent(moveEvt);
+  // Grab handle...
+  var handle = document.getElementsByClassName('player-scrubber-handle')[0];
+  var grab = mouseEvent("mousedown", centerX, centerY, centerX, centerY);
+  handle.dispatchEvent(grab);
   
-  // Wait for UI...
-	setTimeout(function () {
-		console.log('Slider de malheur!');
-    // Then click at the appropriate position
-    //TODO: Put focus on slider??
-    var clickEvt = mouseEvent("click", posX, posY, posX, posY);
-    window.dispatchEvent(clickEvt);
-	}, 10);
- 
-}
+  // ... drag to seek position...
+  var drag = mouseEvent("mousemove", posX, posY, posX, posY);
+  handle.dispatchEvent(drag);
+  
+  // ... and finally drop
+  var drop = mouseEvent("mouseup", posX, posY, posX, posY);
+  handle.dispatchEvent(drop);
+
+};
 
 // Listen to key presses
 window.onkeydown = function (e) {
 	var key = e.keyCode ? e.keyCode : e.which;
-	console.log(key);
 
 	// Space bar
 	if (key == 32) {
@@ -92,6 +114,6 @@ window.onkeydown = function (e) {
 
 	// a
 	else if (key == 65) {
-		seek(60);
+		seek(120);
 	}
 };
