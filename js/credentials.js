@@ -98,4 +98,5 @@ function startSignIn() {
 
 window.onload = function() {
   initApp();
+  chrome.tabs.executeScript(null, {file : './js/inject.js'});
 };

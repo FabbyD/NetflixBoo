@@ -8,14 +8,14 @@
 console.log('inject');
 
 // Initialize Firebase
-var config = {
-  apiKey: "AIzaSyDVt3hs8xgCxZRnIVahX8zvg5rjb2IF-Z4",
-  authDomain: "netflix-boo.firebaseapp.com",
-  databaseURL: "https://netflix-boo.firebaseio.com",
-  storageBucket: "netflix-boo.appspot.com",
-  messagingSenderId: "561430015544"
-};
-firebase.initializeApp(config);
+//var config = {
+//  apiKey: "AIzaSyDVt3hs8xgCxZRnIVahX8zvg5rjb2IF-Z4",
+//  authDomain: "netflix-boo.firebaseapp.com",
+//  databaseURL: "https://netflix-boo.firebaseio.com",
+//  storageBucket: "netflix-boo.appspot.com",
+//  messagingSenderId: "561430015544"
+//};
+//firebase.initializeApp(config);
 
 function mouseEvent(type, sx, sy, cx, cy) {
 	var e = {

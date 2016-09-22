@@ -60,6 +60,6 @@ window.onload = function() {
   initApp();
 };
 
-chrome.pageAction.onClicked.addListener(function (tab){
-  chrome.tabs.executeScript(null, {file : './js/inject.js'});
-});
+//chrome.pageAction.onClicked.addListener(function (tab){
+//  chrome.tabs.executeScript(null, {file : './js/inject.js'});
+//});
