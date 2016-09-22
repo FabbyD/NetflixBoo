@@ -7,6 +7,16 @@
 
 console.log('inject');
 
+// Initialize Firebase
+var config = {
+  apiKey: "AIzaSyDVt3hs8xgCxZRnIVahX8zvg5rjb2IF-Z4",
+  authDomain: "netflix-boo.firebaseapp.com",
+  databaseURL: "https://netflix-boo.firebaseio.com",
+  storageBucket: "netflix-boo.appspot.com",
+  messagingSenderId: "561430015544"
+};
+firebase.initializeApp(config);
+
 function mouseEvent(type, sx, sy, cx, cy) {
 	var e = {
 		bubbles : true,
@@ -43,15 +53,6 @@ playButton.addEventListener('click', function () {
 	console.log('play/pause button');
 });
 
-// DEBUG //////////////////////
-
-var handle = document.getElementsByClassName('player-scrubber-handle')[0];
-handle.addEventListener('mouseup', function(e){
-  console.log('Drop   - X: ' + e.clientX + " Y: " + e.clientY);
-});
-
-///////////////////////////////
-
 // Convert a time in seconds to a position on the slider
 function time2pos(time){
   // Get scrubber dimensions
@@ -65,8 +66,6 @@ function time2pos(time){
   var video = document.getElementsByTagName('video')[0];
   var videoLength = video.seekable.end(0);
   var prct = time/videoLength;
-  
-  console.log('%: ' + prct);
   
   var pos = offsetLeft + Math.round(prct*width);
   return pos;

@@ -1,23 +1,44 @@
 {
 	"manifest_version" : 2,
 
-	"name" : "NetflixBoo",
+	"name" : "Netflix Boo",
 	"description" : "Netflix extension to synchronize your netflix and chill sessions across the ocean",
+	"author" : "Fabrice Dugas",
 	"version" : "1.0",
-
-	"background" : {
-		"scripts" : ["js/background.js"],
-		"persistent" : false
+  
+	"icons" : {
+		"16" : "images/pacman16.png",
+    "64" : "images/pacman64.png",
+    "128" : "images/pacman128.png"
 	},
 
 	"page_action" : {
-		"default_icon" : "images/pacman.png"
+		"default_icon" : "images/pacman16.png",
+    "default_popup": "html/credentials.html"
+	},
+
+	"background" : {
+		"page" : "html/background.html"
 	},
 
 	"permissions" : [
+    "identity",
 		"tabs",
 		"activeTab",
 		"declarativeContent",
-		"https://ajax.googleapis.com/"
-	]
+		"https://ajax.googleapis.com/",
+		"https://www.gstatic.com/"
+	],
+  
+  "content_security_policy" : "script-src 'self' https://www.gstatic.com/ https://*.firebaseio.com https://www.googleapis.com; object-src 'self'",
+  
+  "oauth2": {
+    "client_id": "561430015544-cjhpgkogcsqnenb6a48k8l6d56bqp23k.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
+  },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApRnSwhSKDn433Iu6ChLMBnUMFhNEWxbSC71Nj04ks/Qze26l4hpSCSsjdynVMFxCpYL8fpvrKxdS4WsCuuiirHofq6v+/ODkNkyYhWtZUD+Ze7sCVL14KRHdpxg2h6cU995vOodPDgoTg72jOMXe5wwqew40V8B8YFFP+pLk5v2hTUVuwIYp8WhEMH2+BeeZIpl2QpE7Zk3FO/rHKYwGSPL5sjV8Iz4fzYbVN3GkX+XtcV0ibY9rjTZxRxV7Up0KQQ/SlDZHK7N+OVTGs/jS6gg+HmJsj7g+ZVXKdq8PLN6X3RmYd1VgR5UJTAIBrAaI1dD+cRsLyJMUBqYSG01PzwIDAQAB"
 }
+
