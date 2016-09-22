@@ -1,10 +1,12 @@
 /******************************************************************************
- * File: addListers.js
- * Desc: injects listeners to the video controls
+ * File: background.js
+ * Desc: Acts as overall manager. Dispatches messages between scripts and Fire-
+ * base, has an internal lasting state and initializes the PageAction
  * Author: Fabrice Dugas
- * Year: 2016
  *****************************************************************************/
 
+var activated = false;
+ 
 // Initialize Firebase
 var config = {
   apiKey: "AIzaSyDVt3hs8xgCxZRnIVahX8zvg5rjb2IF-Z4",
@@ -54,12 +56,25 @@ function initApp() {
   firebase.auth().onAuthStateChanged(function(user) {
     console.log('User state change detected from the Background script:', user);
   });
+  
+  // Listen for messages between scripts
+  chrome.runtime.onMessage.addListener(
+    function(request, sender, sendResponse) {
+      if (sender.tab) {
+        console.log('Msg from: ' + sender.tab.url);
+      }
+      
+      else if (request.greeting == 'activate') {
+        sendResponse(activated);
+        activated = true;
+      }
+      
+      else if (request.greeting == 'isActivated') {
+        sendResponse(activated);
+      }
+  });
 }
 
 window.onload = function() {
   initApp();
 };
-
-//chrome.pageAction.onClicked.addListener(function (tab){
-//  chrome.tabs.executeScript(null, {file : './js/inject.js'});
-//});

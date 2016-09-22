@@ -24,6 +24,7 @@ firebase.initializeApp(config);
  * When signed in, we also authenticate to the Firebase Realtime Database.
  */
 function initApp() {
+  
   // Listen for auth state changes.
   // [START authstatelistener]
   firebase.auth().onAuthStateChanged(function(user) {
@@ -37,23 +38,35 @@ function initApp() {
       var uid = user.uid;
       var providerData = user.providerData;
       // [START_EXCLUDE]
-      document.getElementById('quickstart-button').textContent = 'Sign out';
+      document.getElementById('sign-in-button').textContent = 'Sign out';
       document.getElementById('quickstart-sign-in-status').textContent = 'Signed in';
       document.getElementById('quickstart-account-details').textContent = JSON.stringify(user, null, '  ');
       // [END_EXCLUDE]
     } else {
       // Let's try to get a Google auth token programmatically.
       // [START_EXCLUDE]
-      document.getElementById('quickstart-button').textContent = 'Sign-in with Google';
+      document.getElementById('sign-in-button').textContent = 'Sign-in with Google';
       document.getElementById('quickstart-sign-in-status').textContent = 'Signed out';
       document.getElementById('quickstart-account-details').textContent = 'null';
       // [END_EXCLUDE]
     }
-    document.getElementById('quickstart-button').disabled = false;
+    
+    // Check if code was injected before activating sign-in-button
+    chrome.runtime.sendMessage({greeting : 'isActivated'},
+      function(isActivated) {
+        document.getElementById('sign-in-button').disabled = !isActivated;
+      });
   });
   // [END authstatelistener]
-
-  document.getElementById('quickstart-button').addEventListener('click', startSignIn, false);
+  
+  // Check if code was injected before activating activate-button
+  chrome.runtime.sendMessage({greeting : 'isActivated'},
+    function(isActivated) {
+      document.getElementById('activate-button').disabled = isActivated;
+    });
+      
+  document.getElementById('sign-in-button').addEventListener('click', startSignIn, false);
+  document.getElementById('activate-button').addEventListener('click', injectScript, false);
 }
 
 /**
@@ -68,7 +81,7 @@ function startAuth(interactive) {
     } else if(chrome.runtime.lastError) {
       console.error(chrome.runtime.lastError);
     } else if (token) {
-      // Authrorize Firebase with the OAuth Access Token.
+      // Authorize Firebase with the OAuth Access Token.
       var credential = firebase.auth.GoogleAuthProvider.credential(null, token);
       firebase.auth().signInWithCredential(credential).catch(function(error) {
         // The OAuth token might have been invalidated. Lets' remove it from cache.
@@ -88,7 +101,7 @@ function startAuth(interactive) {
  * Starts the sign-in process.
  */
 function startSignIn() {
-  document.getElementById('quickstart-button').disabled = true;
+  document.getElementById('sign-in-button').disabled = true;
   if (firebase.auth().currentUser) {
     firebase.auth().signOut();
   } else {
@@ -96,7 +109,23 @@ function startSignIn() {
   }
 }
 
+/**
+ * Injects javascript code
+ */
+function injectScript() {
+  // Check if code was injected already
+  chrome.runtime.sendMessage({greeting : 'activate'},
+    function(isActivated) {
+        if (!isActivated) {
+          chrome.tabs.executeScript(null, {file: "./js/mouseSimulator.js"});
+          chrome.tabs.executeScript(null, {file: "./js/videoController.js"});
+          document.getElementById('activate-button').disabled = true;
+          document.getElementById('sign-in-button').disabled = false;
+        }
+    });
+}
+ 
+ 
 window.onload = function() {
   initApp();
-  chrome.tabs.executeScript(null, {file : './js/inject.js'});
 };
