@@ -1,4 +1,11 @@
 o Change icon to heart
 o Empty heart when off
 o Full heart when on
-o Inject whole credentials thing to netflix?
+o Create private sessions
+o Listen to messages in background.js
+o Listen to messages in netflixboo.js
+o Send messages from background when push from Firebase using chrome.sendMessage()
+o Send messages from Netflix when video is played, paused or seeked (video.onPlay?, video.onSeek?) using chrome.sendMessage()
+o Add delay when syncing video playback
+o Test the response time to do: Netflix->background->server->background->Netflix
+o 

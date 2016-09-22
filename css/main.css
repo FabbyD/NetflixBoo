@@ -28,6 +28,9 @@ li a {
 #quickstart-sign-in-status {
   font-weight: bold;
 }
+#sign-in-button {
+  disable : true;
+}
 pre {
   overflow-x: scroll;
   line-height: 18px;
