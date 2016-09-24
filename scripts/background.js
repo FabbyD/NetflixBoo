@@ -4,8 +4,6 @@
  * base, has an internal lasting state and initializes the PageAction
  * Author: Fabrice Dugas
  *****************************************************************************/
-
-var activated = false;
  
 // Initialize Firebase
 var config = {
@@ -38,6 +36,62 @@ chrome.runtime.onInstalled.addListener(function (details) {
 });
 
 /**
+ * Manager for netflix boo
+ */
+function Manager() {
+  // Keeps track of activation
+  this.activated = false;
+  
+  // Possible user interactions
+  // Must match the ones in VideoController.js
+  this.playPause = 'PlayPause'
+  this.seeked = 'Seeked'
+  
+  // Listen for messages from scripts
+  chrome.runtime.onMessage.addListener(this.messageHandler.bind(this));
+  
+  this.initFirebase();
+}
+
+// Sets up shortcuts to Firebase features and initiate firebase auth.
+// Stole from github.com/friendlychat
+Manager.prototype.initFirebase = function() {
+  // Shortcuts to Firebase SDK features.
+  this.auth = firebase.auth();
+  this.database = firebase.database();
+  this.storage = firebase.storage();
+  // Initiates Firebase auth and listen to auth state changes.
+  this.auth.onAuthStateChanged(this.onAuthStateChanged.bind(this));
+};
+
+// Triggers when the auth state change for instance when the user signs-in or signs-out.
+Manager.prototype.onAuthStateChanged = function(user) {
+  console.log('User state change detected from the Background script:', user);
+}
+
+Manager.prototype.messageHandler = function(request, sender, sendResponse) {
+  if (sender.tab) {
+    this.handleControllerMsg(request, sender, sendResponse);
+  }
+  
+  else if (request.greeting == 'activate') {
+    sendResponse(this.activated);
+    this.activated = true;
+  }
+  
+  else if (request.greeting == 'isActivated') {
+    sendResponse(this.activated);
+  }
+  
+}
+
+Manager.prototype.handleControllerMsg = function(request, sender, sendResponse) {
+  if (request.action == this.playPause) {
+    
+  }
+}
+
+/**
  * initApp handles setting up the Firebase context and registering
  * callbacks for the auth status.
  *
@@ -52,27 +106,7 @@ chrome.runtime.onInstalled.addListener(function (details) {
  * When signed in, we also authenticate to the Firebase Realtime Database.
  */
 function initApp() {
-  // Listen for auth state changes.
-  firebase.auth().onAuthStateChanged(function(user) {
-    console.log('User state change detected from the Background script:', user);
-  });
-  
-  // Listen for messages between scripts
-  chrome.runtime.onMessage.addListener(
-    function(request, sender, sendResponse) {
-      if (sender.tab) {
-        console.log('Msg from: ' + sender.tab.url);
-      }
-      
-      else if (request.greeting == 'activate') {
-        sendResponse(activated);
-        activated = true;
-      }
-      
-      else if (request.greeting == 'isActivated') {
-        sendResponse(activated);
-      }
-  });
+  var manager = new Manager();
 }
 
 window.onload = function() {

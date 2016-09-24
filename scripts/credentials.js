@@ -24,12 +24,12 @@ firebase.initializeApp(config);
  * When signed in, we also authenticate to the Firebase Realtime Database.
  */
 function initApp() {
-  
   // Listen for auth state changes.
-  // [START authstatelistener]
   firebase.auth().onAuthStateChanged(function(user) {
     if (user) {
       // User is signed in.
+      var head = document.getElementsByTagName('h3')[0];
+      head.style.backgroundImage = "url('../images/pacman64.png')";
       var displayName = user.displayName;
       var email = user.email;
       var emailVerified = user.emailVerified;
@@ -37,36 +37,31 @@ function initApp() {
       var isAnonymous = user.isAnonymous;
       var uid = user.uid;
       var providerData = user.providerData;
-      // [START_EXCLUDE]
+      
       document.getElementById('sign-in-button').textContent = 'Sign out';
-      document.getElementById('quickstart-sign-in-status').textContent = 'Signed in';
-      document.getElementById('quickstart-account-details').textContent = JSON.stringify(user, null, '  ');
-      // [END_EXCLUDE]
+      document.getElementById('sign-in-status').textContent = 'Signed in';
     } else {
       // Let's try to get a Google auth token programmatically.
-      // [START_EXCLUDE]
       document.getElementById('sign-in-button').textContent = 'Sign-in with Google';
-      document.getElementById('quickstart-sign-in-status').textContent = 'Signed out';
-      document.getElementById('quickstart-account-details').textContent = 'null';
-      // [END_EXCLUDE]
+      document.getElementById('sign-in-status').textContent = 'Signed out';
     }
     
-    // Check if code was injected before activating sign-in-button
-    chrome.runtime.sendMessage({greeting : 'isActivated'},
-      function(isActivated) {
-        document.getElementById('sign-in-button').disabled = !isActivated;
-      });
+    document.getElementById('sign-in-button').disabled = !isActivated;
   });
-  // [END authstatelistener]
   
-  // Check if code was injected before activating activate-button
-  chrome.runtime.sendMessage({greeting : 'isActivated'},
+  // Check if extension was activated by user before activating activate-button
+  isActivated(
     function(isActivated) {
       document.getElementById('activate-button').disabled = isActivated;
     });
       
   document.getElementById('sign-in-button').addEventListener('click', startSignIn, false);
   document.getElementById('activate-button').addEventListener('click', injectScript, false);
+}
+
+// Asks background.js if the extension was activated by user
+function isActivated(callback) {
+  chrome.runtime.sendMessage({greeting : 'isActivated'}, callback);
 }
 
 /**
@@ -76,6 +71,10 @@ function initApp() {
 function startAuth(interactive) {
   // Request an OAuth token from the Chrome Identity API.
   chrome.identity.getAuthToken({interactive: !!interactive}, function(token) {
+    // Change head image when trying to sign in
+    var head = document.getElementsByTagName('h3')[0];
+    head.style.backgroundImage = "url('../images/pacman64-loading.gif')";
+    
     if (chrome.runtime.lastError && !interactive) {
       console.log('It was not possible to get a token programmatically.');
     } else if(chrome.runtime.lastError) {
@@ -94,6 +93,7 @@ function startAuth(interactive) {
     } else {
       console.error('The OAuth Token was null');
     }
+    
   });
 }
 

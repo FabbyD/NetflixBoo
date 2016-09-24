@@ -12,7 +12,7 @@ function VideoController() {
   this.handle = document.getElementsByClassName('player-scrubber-handle')[0];
   
   // Possible user interactions
-  this.playClicked = 'VideoPlayed'
+  this.playPause = 'PlayPause'
   this.seeked = 'Seeked'
   
   /// Listen to user actions
@@ -20,9 +20,13 @@ function VideoController() {
   this.playButton.addEventListener('click', function(e) {
     // Verify that it is not a simulated click
     if (!e.fake) {
-      var paused = this.video.paused;
-      var currTime = this.video.currTime;
-      this.sendMessage(this.playClicked, {paused : paused, currTime : currTime}, 'Play/Pause');
+      var action = this.playPause;
+      var info = {
+        paused : this.video.paused,
+        currentTime : this.video.currentTime
+      };
+      
+      this.sendMessage(action, info);
     }
   }.bind(this));
   
@@ -32,8 +36,7 @@ function VideoController() {
   }.bind(this));
 }
 
-VideoController.prototype.sendMessage = function(action, info, debugMsg) {
-  console.log(debugMsg);
+VideoController.prototype.sendMessage = function(action, info) {
   chrome.runtime.sendMessage({action : action, info : info});
 }
 
@@ -109,7 +112,7 @@ function initController(){
     if (key == 32) {
       var paused = controller.video.paused;
       var currTime = controller.video.currTime;
-      controller.sendMessage(controller.playClicked, {paused : paused, currTime : currTime}, 'Play/Pause');
+      controller.sendMessage(controller.playPause, {paused : paused, currTime : currTime}, 'Play/Pause');
     }
 
     // a
