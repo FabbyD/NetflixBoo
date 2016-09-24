@@ -46,11 +46,15 @@ function Manager() {
   // Must match the ones in VideoController.js
   this.playPause = 'PlayPause'
   this.seeked = 'Seeked'
+  this.unload = 'Unload'
   
   // Listen for messages from scripts
   chrome.runtime.onMessage.addListener(this.messageHandler.bind(this));
   
   this.initFirebase();
+  this.userKey = null;
+  this.sessionKey = null;
+  
 }
 
 // Sets up shortcuts to Firebase features and initiate firebase auth.
@@ -83,11 +87,25 @@ Manager.prototype.messageHandler = function(request, sender, sendResponse) {
     sendResponse(this.activated);
   }
   
+  else if (request.greeting == 'saveKeys') {
+    this.sessionKey = request.sessionKey;
+    this.userKey = request.userKey;
+  }
+  
+  else if (request.greeting == 'getSession') {
+    sendResponse(this.sessionKey);
+  }
+  
 }
 
+//TODO: Handle Controller Messages
 Manager.prototype.handleControllerMsg = function(request, sender, sendResponse) {
   if (request.action == this.playPause) {
-    
+    // Iterate through all connected participants and send appropriate message
+  }
+  
+  else if (request.action == this.unload) {
+    // Remove user from session
   }
 }
 
