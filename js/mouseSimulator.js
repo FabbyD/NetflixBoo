@@ -7,8 +7,8 @@
  
 console.log('mouseSimulator injected');
  
-// Create a fake MouseEvent
-function mouseEvent(type, sx, sy, cx, cy) {
+// Creates a fake MouseEvent
+function createFakeMouseEvent(type, sx, sy, cx, cy) {
 	var e = {
 		bubbles : true,
 		cancelable : (type != "mousemove"),
