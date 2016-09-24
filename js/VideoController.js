@@ -29,7 +29,7 @@ function VideoController() {
   // Video seeking
   this.scrubber.addEventListener('click', function(e) {
     console.log(e.fake ? 'Fake scrubber click' : 'Scrubber click');
-  });
+  }.bind(this));
 }
 
 VideoController.prototype.sendMessage = function(action, info, debugMsg) {
@@ -107,7 +107,9 @@ function initController(){
     
     // Space bar
     if (key == 32) {
-      console.log('space bar');
+      var paused = controller.video.paused;
+      var currTime = controller.video.currTime;
+      controller.sendMessage(controller.playClicked, {paused : paused, currTime : currTime}, 'Play/Pause');
     }
 
     // a
