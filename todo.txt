@@ -1,11 +1,17 @@
 o Change icon to heart
 o Empty heart when off
 o Full heart when on
-o Create private sessions
-o Listen to messages in background.js
-o Listen to messages in netflixboo.js
+
+o Make Object Session
+o Create sessions
+x Join sessions
+o Leave sessions
+o Check server to see if user is already connected
+
+x Listen to messages in background.js
+o Listen to messages in VideoController.js
 o Send messages from background when push from Firebase using chrome.sendMessage()
-o Send messages from Netflix when video is played, paused or seeked (video.onPlay?, video.onSeek?) using chrome.sendMessage()
+x Send messages from Netflix when video is played, paused or seeked (video.onPlay?, video.onSeek?) using chrome.sendMessage()
+
 o Add delay when syncing video playback
 o Test the response time to do: Netflix->background->server->background->Netflix
-o 
