@@ -21,12 +21,15 @@ li a {
 .mdl-layout__header-row {
   padding: 0;
 }
-.quickstart-user-details-container {
+.user-details-container {
   margin-top: 20px;
   line-height: 25px;
 }
-#quickstart-sign-in-status {
+#sign-in-status {
   font-weight: bold;
+}
+#activate-button {
+  disable : true;
 }
 #sign-in-button {
   disable : true;
