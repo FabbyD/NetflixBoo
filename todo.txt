@@ -9,9 +9,11 @@ o Leave sessions
 o Check server to see if user is already connected
 
 x Listen to messages in background.js
-o Listen to messages in VideoController.js
-o Send messages from background when push from Firebase using chrome.sendMessage()
+x Listen to messages in VideoController.js
+x Send messages from background when push from Firebase using chrome.sendMessage()
 x Send messages from Netflix when video is played, paused or seeked (video.onPlay?, video.onSeek?) using chrome.sendMessage()
 
-o Add delay when syncing video playback
+x Add delay when syncing video playback
 o Test the response time to do: Netflix->background->server->background->Netflix
+
+o Find a better way to manage actions

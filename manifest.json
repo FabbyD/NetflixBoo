@@ -14,7 +14,7 @@
 
 	"page_action" : {
 		"default_icon" : "images/pacman16.png",
-    "default_popup": "html/credentials.html"
+    "default_popup": "html/popup.html"
 	},
 
 	"background" : {

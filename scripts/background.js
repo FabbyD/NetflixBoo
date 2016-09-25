@@ -42,12 +42,6 @@ function Manager() {
   // Keeps track of activation
   this.activated = false;
   
-  // Possible user interactions
-  // Must match the ones in VideoController.js
-  this.playPause = 'PlayPause'
-  this.seeked = 'Seeked'
-  this.unload = 'Unload'
-  
   // Listen for messages from scripts
   chrome.runtime.onMessage.addListener(this.messageHandler.bind(this));
   
@@ -55,7 +49,17 @@ function Manager() {
   this.userKey = null;
   this.sessionKey = null;
   
+  this.sessionsRef = this.database.ref('sessions');
+  
 }
+
+// Possible user interactions
+// Must match the ones in VideoController.js
+Manager.PLAY = 'play'
+Manager.PAUSE = 'pause'
+Manager.SEEK = 'seek'
+Manager.UNLOAD = 'unload'
+Manager.CONNEXION = 'connexion'
 
 // Sets up shortcuts to Firebase features and initiate firebase auth.
 // Stole from github.com/friendlychat
@@ -90,6 +94,12 @@ Manager.prototype.messageHandler = function(request, sender, sendResponse) {
   else if (request.greeting == 'saveKeys') {
     this.sessionKey = request.sessionKey;
     this.userKey = request.userKey;
+    
+    // Add listener to new actions
+    this.pushToFirebase(Manager.CONNEXION, 0);
+    var actionsPath = this.sessionKey + '/actions'
+    var actionsRef = this.sessionsRef.child(actionsPath);
+    actionsRef.limitToLast(2).on('child_added', this.handleNewAction.bind(this));
   }
   
   else if (request.greeting == 'getSession') {
@@ -98,33 +108,130 @@ Manager.prototype.messageHandler = function(request, sender, sendResponse) {
   
 }
 
-//TODO: Handle Controller Messages
 Manager.prototype.handleControllerMsg = function(request, sender, sendResponse) {
-  if (request.action == this.playPause) {
-    // Iterate through all connected participants and send appropriate message
-  }
+  if (this.connected()) {
   
-  else if (request.action == this.unload) {
-    // Remove user from session
+    if (request.action == Manager.PLAY) {
+      console.log('Video played');
+      this.pushToFirebase(Manager.PLAY, request.time);
+    }
+    
+    else if (request.action == Manager.PAUSE) {
+      console.log('Video paused');
+      this.pushToFirebase(Manager.PAUSE, request.time);
+    }
+    
+    else if (request.action == Manager.SEEK) {
+      console.log('Video seeked');
+      this.pushToFirebase(Manager.SEEK, request.time);
+    }
+
+    else if (request.action == Manager.UNLOAD) {
+      console.log('Netflix unloaded');
+      this.unloadApp();
+    }
+    
   }
 }
 
-/**
- * initApp handles setting up the Firebase context and registering
- * callbacks for the auth status.
- *
- * The core initialization is in firebase.App - this is the glue class
- * which stores configuration. We provide an app name here to allow
- * distinguishing multiple app instances.
- *
- * This method also registers a listener with firebase.auth().onAuthStateChanged.
- * This listener is called when the user is signed in or out, and that
- * is where we update the UI.
- *
- * When signed in, we also authenticate to the Firebase Realtime Database.
- */
+Manager.prototype.pushToFirebase = function(type, time) {
+  
+  var actionsPath = this.sessionKey + '/actions'
+  var actionsRef = this.sessionsRef.child(actionsPath);
+  
+  // Push to actions database
+  if (actionsRef) {
+    actionsRef.push({
+      user : this.userKey,
+      type : type,
+      time : time
+    });
+  }
+  
+  // If needed, initialize actions database
+  else {
+    sessionRef.update({
+      actions : {
+        user : this.userKey,
+        type : type,
+        time : time
+      }
+    });
+  }
+}
+
+Manager.prototype.connected = function() {
+  return (this.sessionKey && this.userKey);
+}
+
+Manager.prototype.handleNewAction = function(newAction, prevAction) {
+  var val = newAction.val();
+  var key = newAction.key;
+  
+  console.log('New action!');
+  console.log(key);
+  console.log('Previous one: ' + prevAction);
+  
+  if (key != 'init') {
+    if (val.user != this.userKey) {
+      console.log('Action from other user!');
+      sendMessage(val.type, val.time);
+    }
+    else {
+      console.log('Action from myself.');
+    }
+  }
+  
+  // Clean previous action
+  if (prevAction) {
+    var prevActionPath = this.sessionKey + '/actions/' + prevAction;
+    var prevActionRef = this.sessionsRef.child(prevActionPath);
+    prevActionRef.remove();
+  }
+}
+
+
+Manager.prototype.removeUserFromSession = function() {
+  if (this.sessionKey && this.userKey) {
+    console.log('Session key and user key present');
+    var sessionsRef = this.database.ref('sessions');
+    var sessionRef = sessionsRef.child(this.sessionKey);
+    if (sessionRef) {
+      console.log('Removing user from session...');
+      var userPath = 'participants/' + this.userKey;
+      var userRef = sessionRef.child(userPath);
+      
+      var onComplete = function(error) {
+        if (error) {
+          console.log('User removal failed');
+        } else {
+          console.log('User removal succeeded');
+        }
+      };
+      userRef.remove(onComplete);
+    }
+    
+  }
+}
+
+Manager.prototype.unloadApp = function() {
+  this.removeUserFromSession();
+  this.activated = false;
+  this.sessionKey = null;
+  this.userKey = null;
+}
+
+function sendMessage(action, time) {
+  console.log('Trying to send message: ' + action + ' ' + time);
+  chrome.runtime.sendMessage({action : action, time : time});
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    chrome.tabs.sendMessage(tabs[0].id, {action : action, time : time});
+  });
+}
+
 function initApp() {
   var manager = new Manager();
+  
 }
 
 window.onload = function() {

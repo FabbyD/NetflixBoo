@@ -1,6 +1,6 @@
 /******************************************************************************
  * File: credentials.js
- * Desc: Credentials page
+ * Desc: Credentials object
  * Author: Fabrice Dugas
  *****************************************************************************/
 
@@ -20,6 +20,10 @@ var config = {
 };
 firebase.initializeApp(config);
 
+
+/**
+ * Credentials constructor
+ */
 function Credentials(){
   // DOM shortcuts
   this.head = document.getElementsByTagName('h3')[0];
@@ -30,7 +34,7 @@ function Credentials(){
   
   this.initFirebase()
   
-  // Check if extension was activated by user before activating activate-button
+  // Check if extension was already activated by user
   isActivated(
     function(isActivated) {
       this.activateButton.disabled = isActivated;
@@ -40,8 +44,10 @@ function Credentials(){
   this.activateButton.addEventListener('click', injectScript, false);
 }
 
-// Sets up shortcuts to Firebase features and initiate firebase auth.
-// Stole from github.com/friendlychat
+/**
+ * Sets up shortcuts to Firebase features and initiate firebase auth.
+ * Stole from github.com/friendlychat
+ */
 Credentials.prototype.initFirebase = function() {
   // Shortcuts to Firebase SDK features.
   this.auth = firebase.auth();
@@ -54,6 +60,9 @@ Credentials.prototype.initFirebase = function() {
 Credentials.ORIGINAL_IM_URL = 'url("../images/pacman64.png")'
 Credentials.LOADING_IMG_URL = 'url("../images/pacman64-loading.gif")'
 
+/**
+ * Add handler on authentification state changes
+ */
 Credentials.prototype.onAuthStateChanged = function(user) {
   // Restore original image
   var headImage = this.head.style.backgroundImage;
@@ -74,12 +83,18 @@ Credentials.prototype.onAuthStateChanged = function(user) {
     this.signInButton.textContent = 'Sign out';
     this.signInStatus.textContent = 'Signed in';
     
-    console.log('User signed in. Loading sessions...')
-    this.loadSessions();
+    // Check if user already joined a session
+    getSession(
+      function(currKey) {
+        console.log(currKey)
+        if (!currKey)
+          this.loadSessions();
+      }.bind(this));
   } else {
-    // Let's try to get a Google auth token programmatically.
     this.signInButton.textContent = 'Sign-in with Google';
     this.signInStatus.textContent = 'Signed out';
+    
+    this.unloadSessions(); 
   }
   
   this.signInButton.disabled = false;
@@ -128,36 +143,66 @@ Credentials.prototype.startSignIn = function() {
   }
 }
 
+/**
+ * Load sessions on the page and listens to new ones
+ */
 Credentials.prototype.loadSessions = function() {
-  console.log('loadSessions called');
   // Reference to the /sessions/ database path.
   this.sessionsRef = this.database.ref('sessions');
-  // Make sure we remove all previous listeners.
-  this.sessionsRef.off();
   
-  // Loads the last 5 sessions and listens for new ones.
-  var setSession = function(data) {
-    console.log('Set session:');
-    console.log(data);
-    var val = data.val();
-    this.displaySession(data.key, val.owner, val.participants);
-  }.bind(this);
-  this.sessionsRef.limitToLast(5).on('child_added', setSession);
-  this.sessionsRef.limitToLast(5).on('child_changed', setSession);
+  if (this.sessionsRef) {
+    // Make sure we remove all previous listeners.
+    this.sessionsRef.off();
+    
+    // Loads the last 5 sessions and listens for new ones.
+    var setSession = function(data) {
+      console.log('Set session:');
+      console.log(data);
+      var val = data.val();
+      this.displaySession(data.key, val.owner, val.participants);
+    }.bind(this);
+    this.sessionsRef.limitToLast(5).on('child_added', setSession); 
+  }
   
+  else {
+    //TODO: There are no sessions in the database
+  }
+  
+  
+}
+
+/**
+ * Remove sessions from the page
+ */
+Credentials.prototype.unloadSessions = function() {
+  var sessionsList = this.sessionsList;
+  while (sessionsList.lastChild) {
+    sessionsList.removeChild(sessionsList.lastChild);
+  }
 }
 
 Credentials.SESSION_TEMPLATE =
     '<div class="session-container">' +
-      '<div class="session-spacing"></div>' +
-      '<div class="session-owner"></div>' +
-      '<div class="session-participants"></div>' +
-      '<button class="session-join-button"></button>' +
+      '<div class="session-owner">Unknown</div>' +
+      '<button class="session-join-button">Join</button>' +
     '</div>';
 
+Credentials.SESSION_JOINED_TEMPLATE =
+    '<div class="session-joined">' +
+      '<label class="session-joined-label">Currently in session with</label>' +
+      '<div class="session-joined-owner">Unknown</div>' +
+      '<button class="session-leave-button">Leave session</button>' +
+    '</div>';
+    
+/**
+ * Add DOM elements for a single session
+ * @param{string} key Session key
+ * @param{string} owner Session's owner
+ * @param{json} participants List of participants?
+ */
 Credentials.prototype.displaySession = function(key, owner, participants){
   var div = document.getElementById(key);
-  // If an element for that message does not exists yet we create it.
+  // If an element for that session does not exist yet we create it.
   if (!div) {
     var container = document.createElement('div');
     container.innerHTML = Credentials.SESSION_TEMPLATE;
@@ -183,9 +228,14 @@ Credentials.prototype.displaySession = function(key, owner, participants){
   
 }
 
+/**
+ * Join an existing session
+ * @param{string} sessionKey Session key
+ * @param{string} owner Session's owner
+ */
 Credentials.prototype.joinSession = function(sessionKey, owner) {
   // TODO: Check if user is already in a session
-  
+
   this.currentSession = sessionKey;
   var currentUser = this.auth.currentUser;
   
@@ -195,15 +245,17 @@ Credentials.prototype.joinSession = function(sessionKey, owner) {
     var participantsRef = sessionRef.child('participants');
     
     var newParticipantRef = participantsRef.push();
-    var userKey = newParticipantRef.key();
+    var userKey = newParticipantRef.key;
     
     newParticipantRef.set({
       name: currentUser.displayName
     })
     .then(function() {
-      var joinButton = document.getElementById(sessionKey).querySelector('#session-join-button')
-      joinButton.disabled = true;
       saveKeys(sessionKey, userKey);
+      this.unloadSessions();
+      var joined = document.createElement('div');
+      joined.innerHTML = Credentials.SESSION_JOINED_TEMPLATE;
+      joined.querySelector('.session-joined-owner').innerHTML = owner;
     }.bind(this))
     .catch(function(error) {
       console.error('Error writing new message to Firebase Database', error);
@@ -254,8 +306,8 @@ function injectScript() {
   chrome.runtime.sendMessage({greeting : 'activate'},
     function(isActivated) {
         if (!isActivated) {
-          chrome.tabs.executeScript(null, {file: "./js/mouseSimulator.js"});
-          chrome.tabs.executeScript(null, {file: "./js/videoController.js"});
+          chrome.tabs.executeScript(null, {file: "./scripts/mouseSimulator.js"});
+          chrome.tabs.executeScript(null, {file: "./scripts/VideoController.js"});
           document.getElementById('activate-button').disabled = true;
           document.getElementById('sign-in-button').disabled = false;
         }
