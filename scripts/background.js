@@ -5,16 +5,6 @@
  * Author: Fabrice Dugas
  *****************************************************************************/
  
-// Initialize Firebase
-var config = {
-  apiKey: "AIzaSyDVt3hs8xgCxZRnIVahX8zvg5rjb2IF-Z4",
-  authDomain: "netflix-boo.firebaseapp.com",
-  databaseURL: "https://netflix-boo.firebaseio.com",
-  storageBucket: "netflix-boo.appspot.com",
-  messagingSenderId: "561430015544"
-};
-firebase.initializeApp(config);
- 
 // PageAction shenanigans
 var rule1 = {
 	conditions : [
@@ -53,14 +43,6 @@ function Manager() {
   
 }
 
-// Possible user interactions
-// Must match the ones in VideoController.js
-Manager.PLAY = 'play'
-Manager.PAUSE = 'pause'
-Manager.SEEK = 'seek'
-Manager.UNLOAD = 'unload'
-Manager.CONNEXION = 'connexion'
-
 // Sets up shortcuts to Firebase features and initiate firebase auth.
 // Stole from github.com/friendlychat
 Manager.prototype.initFirebase = function() {
@@ -96,10 +78,10 @@ Manager.prototype.messageHandler = function(request, sender, sendResponse) {
     this.userKey = request.userKey;
     
     // Add listener to new actions
-    this.pushToFirebase(Manager.CONNEXION, 0);
+    this.pushToFirebase(State.CONNECTED, 0);
     var actionsPath = this.sessionKey + '/actions'
     var actionsRef = this.sessionsRef.child(actionsPath);
-    actionsRef.limitToLast(2).on('child_added', this.handleNewAction.bind(this));
+    actionsRef.limitToLast(1).on('child_added', this.handleNewAction.bind(this));
   }
   
   else if (request.greeting == 'getSession') {
@@ -111,82 +93,46 @@ Manager.prototype.messageHandler = function(request, sender, sendResponse) {
 Manager.prototype.handleControllerMsg = function(request, sender, sendResponse) {
   if (this.connected()) {
   
-    if (request.action == Manager.PLAY) {
-      console.log('Video played');
-      this.pushToFirebase(Manager.PLAY, request.time);
-    }
-    
-    else if (request.action == Manager.PAUSE) {
-      console.log('Video paused');
-      this.pushToFirebase(Manager.PAUSE, request.time);
-    }
-    
-    else if (request.action == Manager.SEEK) {
-      console.log('Video seeked');
-      this.pushToFirebase(Manager.SEEK, request.time);
+    if (request.state == State.PLAYING || request.state == State.PAUSED) {
+      console.log('Video ' + request.state + ' at ' + request.time);
+      this.pushToFirebase(request.state, request.time);
     }
 
-    else if (request.action == Manager.UNLOAD) {
+    else if (request.state == State.UNLOADED) {
       console.log('Netflix unloaded');
       this.unloadApp();
     }
-    
   }
 }
 
-Manager.prototype.pushToFirebase = function(type, time) {
+Manager.prototype.pushToFirebase = function(state, time) {
   
   var actionsPath = this.sessionKey + '/actions'
   var actionsRef = this.sessionsRef.child(actionsPath);
+  var date = new Date();
   
-  // Push to actions database
-  if (actionsRef) {
-    actionsRef.push({
-      user : this.userKey,
-      type : type,
-      time : time
-    });
-  }
+  var newAction = {
+    user : this.userKey,
+    state : state,
+    time : time,
+    timePushed : date.getTime()
+  };
   
-  // If needed, initialize actions database
-  else {
-    sessionRef.update({
-      actions : {
-        user : this.userKey,
-        type : type,
-        time : time
-      }
-    });
-  }
+  actionsRef.push(newAction);
 }
 
-Manager.prototype.connected = function() {
-  return (this.sessionKey && this.userKey);
-}
-
-Manager.prototype.handleNewAction = function(newAction, prevAction) {
+Manager.prototype.handleNewAction = function(newAction) {
   var val = newAction.val();
   var key = newAction.key;
   
-  console.log('New action!');
-  console.log(key);
-  console.log('Previous one: ' + prevAction);
-  
   if (key != 'init') {
     if (val.user != this.userKey) {
-      console.log('Action from other user!');
-      sendMessage(val.type, val.time);
+      console.log('Action from other user: ' + val.state + ' ' + val.time);
+      sendMessage(val.state, val.time);
     }
     else {
-      console.log('Action from myself.');
+      console.log('Action from myself: ' + val.state + ' ' + val.time);
     }
-  }
-  
-  // Clean previous action
-  if (prevAction) {
-    var prevActionPath = this.sessionKey + '/actions/' + prevAction;
-    var prevActionRef = this.sessionsRef.child(prevActionPath);
-    prevActionRef.remove();
   }
 }
 
@@ -221,9 +167,12 @@ Manager.prototype.unloadApp = function() {
   this.userKey = null;
 }
 
+Manager.prototype.connected = function() {
+  return (this.sessionKey && this.userKey);
+}
+
 function sendMessage(action, time) {
   console.log('Trying to send message: ' + action + ' ' + time);
-  chrome.runtime.sendMessage({action : action, time : time});
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
     chrome.tabs.sendMessage(tabs[0].id, {action : action, time : time});
   });

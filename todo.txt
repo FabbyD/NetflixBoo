@@ -17,3 +17,6 @@ x Add delay when syncing video playback
 o Test the response time to do: Netflix->background->server->background->Netflix
 
 o Find a better way to manage actions
+o Add listener to participants when session is created that kills the session when the owner leaves/no participants are left
+
+o Listen to arrow keys

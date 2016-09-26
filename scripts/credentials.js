@@ -1,25 +1,8 @@
 /******************************************************************************
  * File: credentials.js
- * Desc: Credentials object
+ * Desc: Handles signing in to Firebase using a Google account
  * Author: Fabrice Dugas
  *****************************************************************************/
-
-/** TODO:
- * Create Session object
- * Add createSession and leaveSession
- * Update UI when stuff...
- */
-
-// Initialize Firebase
-var config = {
-  apiKey: "AIzaSyDVt3hs8xgCxZRnIVahX8zvg5rjb2IF-Z4",
-  authDomain: "netflix-boo.firebaseapp.com",
-  databaseURL: "https://netflix-boo.firebaseio.com",
-  storageBucket: "netflix-boo.appspot.com",
-  messagingSenderId: "561430015544"
-};
-firebase.initializeApp(config);
-
 
 /**
  * Credentials constructor
@@ -299,13 +282,14 @@ function saveKeys(sessionKey, userKey) {
 }
 
 /**
- * Injects javascript code
+ * Injects javascript code in the Netflix page
  */
 function injectScript() {
   // Check if code was injected already
   chrome.runtime.sendMessage({greeting : 'activate'},
     function(isActivated) {
         if (!isActivated) {
+          chrome.tabs.executeScript(null, {file: "./scripts/utilities.js"});
           chrome.tabs.executeScript(null, {file: "./scripts/mouseSimulator.js"});
           chrome.tabs.executeScript(null, {file: "./scripts/VideoController.js"});
           document.getElementById('activate-button').disabled = true;

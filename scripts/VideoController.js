@@ -1,6 +1,6 @@
 /******************************************************************************
- * File: netflixboo.js
- * Desc: injects code to control and listen to video player
+ * File: VideoController.js
+ * Desc: Handles interaction with Netflix video player
  * Author: Fabrice Dugas
  *****************************************************************************/
 
@@ -15,17 +15,11 @@ function VideoController() {
   this.playButton.addEventListener('click', this.playButtonHandler.bind(this));
   
   // Video seeking
-  this.scrubber.addEventListener('click', this.scrubberHandler.bind(this));
+  this.scrubber.addEventListener('mouseup', this.scrubberHandler.bind(this));
   
   // Listen to Manager
   chrome.runtime.onMessage.addListener(this.messageHandler.bind(this));
 }
-
-// Possible user interactions
-VideoController.PLAY = 'play'
-VideoController.PAUSE = 'pause'
-VideoController.SEEK = 'seek'
-VideoController.UNLOAD = 'unload'
 
 VideoController.prototype.play = function() {
   var paused = this.video.paused;
@@ -49,20 +43,23 @@ VideoController.prototype.playButtonHandler = function(e) {
   // Verify that it is not a simulated click
   if (!e.fake) {
     var paused = this.video.paused;
-    var action = (paused ? VideoController.PAUSE : VideoController.PLAY);
+    var state = (paused ? State.PAUSED : State.PLAYING);
     var time = this.video.currentTime;
     
-    sendMessage(action, time);
+    sendMessage(state, time);
   }
 }
 
 VideoController.prototype.scrubberHandler = function(e) {
   // Verify that it is not a simulated click
   if (!e.fake) {
-    var action = VideoController.SEEK;
-    var time = this.video.currentTime;
+    var paused = this.video.paused;
+    var state = (paused ? State.PAUSED : State.PLAYING);
+    var time = this.pos2time(e.clientX);
     
-    sendMessage(action, time);
+    console.log('Seeked at ' + time);
+    
+    sendMessage(state, time);
   }
 }
 
@@ -78,6 +75,19 @@ VideoController.prototype.time2pos = function(time) {
   
   var pos = offsetLeft + Math.round(prct*width);
   return pos;
+}
+
+// Convert a position on the scrubber to a time in seconds
+VideoController.prototype.pos2time = function(posX) {
+  // Get scrubber dimensions
+  var rect = this.scrubber.getBoundingClientRect();
+  var offsetLeft = rect.left;
+  var width = rect.width;
+  var prct = (posX - offsetLeft)/width;
+  
+  var videoLength = this.video.seekable.end(0);
+  var time = prct*videoLength;
+  return time;
 }
 
 VideoController.prototype.seek = function(time) {
@@ -114,23 +124,19 @@ VideoController.prototype.seek = function(time) {
 }
 
 VideoController.prototype.messageHandler = function(request, sender, sendResponse) {
-  if (request.action == VideoController.PLAY) {
+  if (request.state == State.PLAYING) {
     this.seek(request.time);
     this.play();
   }
   
-  else if (request.action == VideoController.PAUSE) {
+  else if (request.state == State.PAUSED) {
     this.seek(request.time);
     this.pause();
   }
-  
-  else if (request.action == VideoController.SEEK) {
-    this.seek(request.time);
-  }
 }
 
-function sendMessage(action, time) {
-  chrome.runtime.sendMessage({action : action, time : time});
+function sendMessage(state, time) {
+  chrome.runtime.sendMessage({state : state, time : time});
 }
 
 function initController(){
@@ -144,9 +150,9 @@ function initController(){
     // Space bar
     if (key == 32) {
       var paused = controller.video.paused;
-      var action = (paused ? VideoController.PAUSE : VideoController.PLAY);
+      var state = (paused ? State.PAUSED : State.PLAYING);
       var time = controller.video.currentTime;
-      sendMessage(action, time);
+      sendMessage(state, time);
     }
     
     //TODO: Add arrow keys
@@ -154,7 +160,7 @@ function initController(){
   
   // Listen to page refresh or exit
   window.addEventListener('unload', function() {
-    sendMessage(VideoController.UNLOAD);
+    sendMessage(State.UNLOADED);
   });
   
 };
