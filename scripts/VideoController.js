@@ -46,7 +46,7 @@ VideoController.prototype.playButtonHandler = function(e) {
     var state = (paused ? State.PAUSED : State.PLAYING);
     var time = this.video.currentTime;
     
-    sendMessage(state, time);
+    this.sendMessage(state, time);
   }
 }
 
@@ -59,7 +59,7 @@ VideoController.prototype.scrubberHandler = function(e) {
     
     console.log('Seeked at ' + time);
     
-    sendMessage(state, time);
+    this.sendMessage(state, time);
   }
 }
 
@@ -135,7 +135,7 @@ VideoController.prototype.messageHandler = function(request, sender, sendRespons
   }
 }
 
-function sendMessage(state, time) {
+VideoController.prototype.sendMessage = function(state, time) {
   chrome.runtime.sendMessage({state : state, time : time});
 }
 
@@ -152,7 +152,7 @@ function initController(){
       var paused = controller.video.paused;
       var state = (paused ? State.PAUSED : State.PLAYING);
       var time = controller.video.currentTime;
-      sendMessage(state, time);
+      contoller.sendMessage(state, time);
     }
     
     //TODO: Add arrow keys
@@ -160,7 +160,7 @@ function initController(){
   
   // Listen to page refresh or exit
   window.addEventListener('unload', function() {
-    sendMessage(State.UNLOADED);
+    controller.sendMessage(State.UNLOADED);
   });
   
 };

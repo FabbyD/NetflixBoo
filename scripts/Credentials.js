@@ -40,7 +40,7 @@ Credentials.prototype.initFirebase = function() {
   this.auth.onAuthStateChanged(this.onAuthStateChanged.bind(this));
 };
 
-Credentials.ORIGINAL_IM_URL = 'url("../images/pacman64.png")'
+Credentials.ORIGINAL_IMG_URL = 'url("../images/pacman64.png")'
 Credentials.LOADING_IMG_URL = 'url("../images/pacman64-loading.gif")'
 
 /**
@@ -50,7 +50,7 @@ Credentials.prototype.onAuthStateChanged = function(user) {
   // Restore original image
   var headImage = this.head.style.backgroundImage;
   if (headImage == Credentials.LOADING_IMG_URL){
-    this.head.style.backgroundImage = Credentials.ORIGINAL_IM_URL;
+    this.head.style.backgroundImage = Credentials.ORIGINAL_IMG_URL;
   }
   
   if (user) {
@@ -132,25 +132,18 @@ Credentials.prototype.startSignIn = function() {
 Credentials.prototype.loadSessions = function() {
   // Reference to the /sessions/ database path.
   this.sessionsRef = this.database.ref('sessions');
+
+  // Make sure we remove all previous listeners.
+  this.sessionsRef.off();
   
-  if (this.sessionsRef) {
-    // Make sure we remove all previous listeners.
-    this.sessionsRef.off();
-    
-    // Loads the last 5 sessions and listens for new ones.
-    var setSession = function(data) {
-      console.log('Set session:');
-      console.log(data);
-      var val = data.val();
-      this.displaySession(data.key, val.owner, val.participants);
-    }.bind(this);
-    this.sessionsRef.limitToLast(5).on('child_added', setSession); 
-  }
-  
-  else {
-    //TODO: There are no sessions in the database
-  }
-  
+  // Loads the last 5 sessions and listens for new ones.
+  var setSession = function(data) {
+    console.log('Set session:');
+    console.log(data);
+    var val = data.val();
+    this.displaySession(data.key, val.owner, val.participants);
+  }.bind(this);
+  this.sessionsRef.limitToLast(5).on('child_added', setSession); 
   
 }
 
@@ -213,37 +206,17 @@ Credentials.prototype.displaySession = function(key, owner, participants){
 
 /**
  * Join an existing session
+ *
  * @param{string} sessionKey Session key
  * @param{string} owner Session's owner
  */
-Credentials.prototype.joinSession = function(sessionKey, owner) {
-  // TODO: Check if user is already in a session
-
-  this.currentSession = sessionKey;
-  var currentUser = this.auth.currentUser;
+Credentials.prototype.joinSession = function(sessionKey) {
+  var request = {
+    greeting : 'joinSession',
+    sessionKey : sessionKey
+  };
   
-  var sessionRef = this.sessionsRef.child(sessionKey);
-  if (sessionRef) {
-    console.log(currentUser.displayName + ' is joining ' + owner);
-    var participantsRef = sessionRef.child('participants');
-    
-    var newParticipantRef = participantsRef.push();
-    var userKey = newParticipantRef.key;
-    
-    newParticipantRef.set({
-      name: currentUser.displayName
-    })
-    .then(function() {
-      saveKeys(sessionKey, userKey);
-      this.unloadSessions();
-      var joined = document.createElement('div');
-      joined.innerHTML = Credentials.SESSION_JOINED_TEMPLATE;
-      joined.querySelector('.session-joined-owner').innerHTML = owner;
-    }.bind(this))
-    .catch(function(error) {
-      console.error('Error writing new message to Firebase Database', error);
-    });
-  }
+  chrome.runtime.sendMessage(request);
 }
 
 //TODO: leaveSession
@@ -268,17 +241,6 @@ function isActivated(callback) {
  */
 function getSession(callback) {
   chrome.runtime.sendMessage({greeting : 'getSession'}, callback);
-}
-
-/**
- * Save keys in background.js
- */
-function saveKeys(sessionKey, userKey) {
-  chrome.runtime.sendMessage({
-    greeting : 'saveKeys',
-    sessionKey : sessionKey,
-    userKey : userKey
-    });
 }
 
 /**

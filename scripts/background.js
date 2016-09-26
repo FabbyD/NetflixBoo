@@ -4,7 +4,7 @@
  * base, has an internal lasting state and initializes the PageAction
  * Author: Fabrice Dugas
  *****************************************************************************/
- 
+
 // PageAction shenanigans
 var rule1 = {
 	conditions : [
@@ -36,8 +36,7 @@ function Manager() {
   chrome.runtime.onMessage.addListener(this.messageHandler.bind(this));
   
   this.initFirebase();
-  this.userKey = null;
-  this.sessionKey = null;
+  this.session = null;
   
   this.sessionsRef = this.database.ref('sessions');
   
@@ -73,19 +72,18 @@ Manager.prototype.messageHandler = function(request, sender, sendResponse) {
     sendResponse(this.activated);
   }
   
-  else if (request.greeting == 'saveKeys') {
-    this.sessionKey = request.sessionKey;
-    this.userKey = request.userKey;
+  else if (request.greeting == 'joinSession') {
+    this.session = new Session(request.sessionKey)
+    this.session.join();
     
     // Add listener to new actions
     this.pushToFirebase(State.CONNECTED, 0);
-    var actionsPath = this.sessionKey + '/actions'
-    var actionsRef = this.sessionsRef.child(actionsPath);
+    var actionsRef = this.session.child('actions');
     actionsRef.limitToLast(1).on('child_added', this.handleNewAction.bind(this));
   }
   
   else if (request.greeting == 'getSession') {
-    sendResponse(this.sessionKey);
+    sendResponse(this.session ? this.session.key : null);
   }
   
 }
@@ -107,12 +105,11 @@ Manager.prototype.handleControllerMsg = function(request, sender, sendResponse) 
 
 Manager.prototype.pushToFirebase = function(state, time) {
   
-  var actionsPath = this.sessionKey + '/actions'
-  var actionsRef = this.sessionsRef.child(actionsPath);
+  var actionsRef = this.session.child('actions');
   var date = new Date();
   
   var newAction = {
-    user : this.userKey,
+    user : this.session.userRef.key,
     state : state,
     time : time,
     timePushed : date.getTime()
@@ -126,7 +123,7 @@ Manager.prototype.handleNewAction = function(newAction) {
   var key = newAction.key;
   
   if (key != 'init') {
-    if (val.user != this.userKey) {
+    if (val.user != this.session.userRef.key) {
       console.log('Action from other user: ' + val.state + ' ' + val.time);
       sendMessage(val.state, val.time);
     }
@@ -138,13 +135,13 @@ Manager.prototype.handleNewAction = function(newAction) {
 
 
 Manager.prototype.removeUserFromSession = function() {
-  if (this.sessionKey && this.userKey) {
+  if (this.connected()) {
     console.log('Session key and user key present');
     var sessionsRef = this.database.ref('sessions');
-    var sessionRef = sessionsRef.child(this.sessionKey);
+    var sessionRef = sessionsRef.child(this.session.key);
     if (sessionRef) {
       console.log('Removing user from session...');
-      var userPath = 'participants/' + this.userKey;
+      var userPath = 'participants/' + this.session.userRef.key;
       var userRef = sessionRef.child(userPath);
       
       var onComplete = function(error) {
@@ -163,18 +160,17 @@ Manager.prototype.removeUserFromSession = function() {
 Manager.prototype.unloadApp = function() {
   this.removeUserFromSession();
   this.activated = false;
-  this.sessionKey = null;
-  this.userKey = null;
+  this.session = null;
 }
 
 Manager.prototype.connected = function() {
-  return (this.sessionKey && this.userKey);
+  return (this.session && this.session.userRef);
 }
 
-function sendMessage(action, time) {
-  console.log('Trying to send message: ' + action + ' ' + time);
+Manager.prototype.sendMessage = function(state, time) {
+  console.log('Trying to send message: ' + state + ' ' + time);
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    chrome.tabs.sendMessage(tabs[0].id, {action : action, time : time});
+    chrome.tabs.sendMessage(tabs[0].id, {state : state, time : time});
   });
 }
 

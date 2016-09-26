@@ -10,3 +10,8 @@ var State = {
    CONNECTED : 'connected',
    UNLOADED : 'unloaded'
 };
+
+var SessionState = {
+  JOINED : 'joined',
+  FAILED : 'failed'
+};
