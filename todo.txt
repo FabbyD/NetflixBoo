@@ -20,3 +20,4 @@ o Find a better way to manage actions
 o Add listener to participants when session is created that kills the session when the owner leaves/no participants are left
 
 o Listen to arrow keys
+o Refactor VideoController.playButtonHandler and scrubberHandler into one function
