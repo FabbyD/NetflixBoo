@@ -1,2 +1,2 @@
 # Netflix Boo
-Netflix and chill across the ocean.
+Netflix and chill across seas.
