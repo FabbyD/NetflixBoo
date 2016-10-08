@@ -2,11 +2,11 @@ o Change icon to heart
 o Empty heart when off
 o Full heart when on
 
-o Make Object Session
-o Create sessions
+x Make Object Session
+x Create sessions
 x Join sessions
-o Leave sessions
-o Check server to see if user is already connected
+x Leave sessions
+~ Check server to see if user is already connected
 
 x Listen to messages in background.js
 x Listen to messages in VideoController.js
@@ -16,8 +16,8 @@ x Send messages from Netflix when video is played, paused or seeked (video.onPla
 x Add delay when syncing video playback
 o Test the response time to do: Netflix->background->server->background->Netflix
 
-o Find a better way to manage actions
-o Add listener to participants when session is created that kills the session when the owner leaves/no participants are left
+x Find a better way to manage actions
+x Add listener to participants when session is created that kills the session when the owner leaves/no participants are left
 
 o Listen to arrow keys
 
