@@ -15,3 +15,13 @@ var SessionState = {
   JOINED : 'joined',
   FAILED : 'failed'
 };
+
+var Message = {
+  
+}
+
+var utils = {
+  isNetflixOn : function(url) {
+    return url.match(/https:\/\/www.netflix.com\/watch\//)
+  }
+}

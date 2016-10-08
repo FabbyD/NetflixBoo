@@ -20,3 +20,6 @@ o Find a better way to manage actions
 o Add listener to participants when session is created that kills the session when the owner leaves/no participants are left
 
 o Listen to arrow keys
+
+o Fix precision
+o Fix paragraph seek and/or scrubber hidden seek

@@ -60,30 +60,58 @@ Manager.prototype.onAuthStateChanged = function(user) {
 
 Manager.prototype.messageHandler = function(request, sender, sendResponse) {
   if (sender.tab) {
-    this.handleControllerMsg(request, sender, sendResponse);
+    this.handleControllerMsg(request, sender, sendResponse)
   }
   
   else if (request.greeting == 'activate') {
-    sendResponse(this.activated);
-    this.activated = true;
+    sendResponse(this.activated)
+    this.activated = true
   }
   
   else if (request.greeting == 'isActivated') {
-    sendResponse(this.activated);
+    sendResponse(this.activated)
+  }
+  
+  else if (request.greeting == 'createSession') {
+    this.session = new Session()
+    
+    // Add listener to new actions
+    var videoRef = this.session.child('video')
+    videoRef.on('child_changed', this.handleNewAction.bind(this))
+    
+    var farewell = {
+      key   : this.session.key,
+      owner : this.session.owner
+    }
+    sendResponse(farewell)
   }
   
   else if (request.greeting == 'joinSession') {
-    this.session = new Session(request.sessionKey)
-    this.session.join();
+    this.session = new Session(request.sessionKey, request.owner)
+    this.session.join()
     
     // Add listener to new actions
-    this.pushToFirebase(State.CONNECTED, 0);
-    var actionsRef = this.session.child('actions');
-    actionsRef.limitToLast(1).on('child_added', this.handleNewAction.bind(this));
+    var videoRef = this.session.child('video')
+    videoRef.on('child_changed', this.handleNewAction.bind(this))
+    
+    var farewell = {
+      key   : this.session.key,
+      owner : this.session.owner
+    }
+    sendResponse(farewell)
+  }
+  
+  else if (request.greeting == 'leaveSession') {
+    console.log('Background leaving session')
+    this.removeUserFromSession(sendResponse)
   }
   
   else if (request.greeting == 'getSession') {
-    sendResponse(this.session ? this.session.key : null);
+    var farewell = !this.session ? null : {
+      key : this.session.key,
+      owner : this.session.owner
+    }
+    sendResponse(farewell)
   }
   
 }
@@ -93,7 +121,7 @@ Manager.prototype.handleControllerMsg = function(request, sender, sendResponse) 
   
     if (request.state == State.PLAYING || request.state == State.PAUSED) {
       console.log('Video ' + request.state + ' at ' + request.time);
-      this.pushToFirebase(request.state, request.time);
+      this.updateFirebase(request.state, request.time);
     }
 
     else if (request.state == State.UNLOADED) {
@@ -103,57 +131,45 @@ Manager.prototype.handleControllerMsg = function(request, sender, sendResponse) 
   }
 }
 
-Manager.prototype.pushToFirebase = function(state, time) {
+Manager.prototype.updateFirebase = function(state, time) {
   
-  var actionsRef = this.session.child('actions');
+  var video = this.session.child('video');
   var date = new Date();
   
-  var newAction = {
-    user : this.session.userRef.key,
-    state : state,
-    time : time,
-    timePushed : date.getTime()
-  };
-  
-  actionsRef.push(newAction);
+  video.set({
+    info : {
+      user  : this.session.userRef.key,
+      state : state,
+      lastUpdatedTime : time,
+      lastTimePushed  : date.getTime()
+    }
+  })
 }
 
-Manager.prototype.handleNewAction = function(newAction) {
-  var val = newAction.val();
-  var key = newAction.key;
+Manager.prototype.handleNewAction = function(video) {
+  var val = video.val();
+  var key = video.key;
   
-  if (key != 'init') {
-    if (val.user != this.session.userRef.key) {
-      console.log('Action from other user: ' + val.state + ' ' + val.time);
-      sendMessage(val.state, val.time);
-    }
-    else {
-      console.log('Action from myself: ' + val.state + ' ' + val.time);
-    }
+  console.log('new action')
+  console.log(val)
+  
+  if (val.user != this.session.userRef.key) {
+    console.log('Action from other user: ' + val.state + ' ' + val.lastUpdatedTime);
+    this.sendMessage(val.state, val.lastUpdatedTime);
   }
+  else {
+    console.log('Action from myself: ' + val.state + ' ' + val.lastUpdatedTime);
+  }
+
 }
 
-
-Manager.prototype.removeUserFromSession = function() {
+Manager.prototype.removeUserFromSession = function(callback) {
   if (this.connected()) {
-    console.log('Session key and user key present');
-    var sessionsRef = this.database.ref('sessions');
-    var sessionRef = sessionsRef.child(this.session.key);
-    if (sessionRef) {
-      console.log('Removing user from session...');
-      var userPath = 'participants/' + this.session.userRef.key;
-      var userRef = sessionRef.child(userPath);
-      
-      var onComplete = function(error) {
-        if (error) {
-          console.log('User removal failed');
-        } else {
-          console.log('User removal succeeded');
-        }
-      };
-      userRef.remove(onComplete);
-    }
-    
+    var onSuccess = function() {
+      if (callback) callback()
+      this.session = null
+    }.bind(this)
+    this.session.leave(onSuccess)
   }
 }
 
@@ -168,15 +184,19 @@ Manager.prototype.connected = function() {
 }
 
 Manager.prototype.sendMessage = function(state, time) {
-  console.log('Trying to send message: ' + state + ' ' + time);
-  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    chrome.tabs.sendMessage(tabs[0].id, {state : state, time : time});
-  });
+  if (this.activated) {
+    console.log('Trying to send message: ' + state + ' ' + time);
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+      if (utils.isNetflixOn(tabs[0].url)) {
+        console.log('In netflix')
+        chrome.tabs.sendMessage(tabs[0].id, {state : state, time : time}); 
+      }
+    });
+  }
 }
 
 function initApp() {
   var manager = new Manager();
-  
 }
 
 window.onload = function() {

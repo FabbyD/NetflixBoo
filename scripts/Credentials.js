@@ -17,15 +17,28 @@ function Credentials(){
   
   this.initFirebase()
   
-  // Check if extension was already activated by user
-  isActivated(
-    function(isActivated) {
-      this.activateButton.disabled = isActivated;
-    }.bind(this));
-    
-  this.signInButton.addEventListener('click', this.startSignIn.bind(this), false);
-  this.activateButton.addEventListener('click', injectScript, false);
+  this.initUI()
 }
+
+Credentials.SESSION_TEMPLATE =
+    '<div class="session-container">' +
+      '<label class="session-owner">Unknown</label>' +
+      '<div><button class="session-join-button">Join</button></div>' +
+    '</div>';
+
+Credentials.SESSION_JOINED_TEMPLATE =
+    '<div class="session-joined">' +
+      '<label class="session-joined-label">Currently in session with</label>' +
+      '<div class="session-joined-owner">UNKNOWN</div>' +
+      '<div><button class="session-leave-button">Leave session</button></div>' +
+    '</div>';
+
+Credentials.CREATE_SESSION_BUTTON_ID = 'create-session-button'
+Credentials.CREATE_SESSION_BUTTON_TEMPLATE =
+    '<div><button id="create-session-button">New session</button></div>';
+    
+Credentials.ORIGINAL_IMG_URL = 'url("../images/pacman64.png")'
+Credentials.LOADING_IMG_URL = 'url("../images/pacman64-loading.gif")'
 
 /**
  * Sets up shortcuts to Firebase features and initiate firebase auth.
@@ -40,8 +53,23 @@ Credentials.prototype.initFirebase = function() {
   this.auth.onAuthStateChanged(this.onAuthStateChanged.bind(this));
 };
 
-Credentials.ORIGINAL_IMG_URL = 'url("../images/pacman64.png")'
-Credentials.LOADING_IMG_URL = 'url("../images/pacman64-loading.gif")'
+/**
+ * Sets up the user interface.
+ * Stole from github.com/friendlychat
+ */
+Credentials.prototype.initUI = function() {
+  // Check if extension was already activated by user
+  var disableActivateButton = function(isActivated){
+    this.activateButton.disabled = isActivated;
+  }
+  isActivated(disableActivateButton.bind(this));
+  
+  // Check if user is in session
+  getSession(this.displayCurrentSession.bind(this))
+    
+  this.signInButton.addEventListener('click', this.startSignIn.bind(this), false);
+  this.activateButton.addEventListener('click', this.activate.bind(this), false);
+ }
 
 /**
  * Add handler on authentification state changes
@@ -67,12 +95,14 @@ Credentials.prototype.onAuthStateChanged = function(user) {
     this.signInStatus.textContent = 'Signed in';
     
     // Check if user already joined a session
-    getSession(
-      function(currKey) {
-        console.log(currKey)
-        if (!currKey)
-          this.loadSessions();
-      }.bind(this));
+    var loadSessions = function(session) {
+      if (!session) {
+        this.loadSessions();
+        console.log('Loading session!')
+      }
+    }
+    getSession(loadSessions.bind(this));
+    
   } else {
     this.signInButton.textContent = 'Sign-in with Google';
     this.signInStatus.textContent = 'Signed out';
@@ -130,6 +160,18 @@ Credentials.prototype.startSignIn = function() {
  * Load sessions on the page and listens to new ones
  */
 Credentials.prototype.loadSessions = function() {
+  // New session button
+  var div = document.getElementById(Credentials.CREATE_SESSION_BUTTON_ID);
+  if (!div) {
+    var container = document.createElement('div');
+    container.innerHTML = Credentials.CREATE_SESSION_BUTTON_TEMPLATE;
+    div = container.firstChild;
+    this.sessionsList.appendChild(div)
+  }
+  
+  // Add listener to new session button
+  div.querySelector('#create-session-button').addEventListener('click', this.newSession.bind(this))
+  
   // Reference to the /sessions/ database path.
   this.sessionsRef = this.database.ref('sessions');
 
@@ -138,8 +180,6 @@ Credentials.prototype.loadSessions = function() {
   
   // Loads the last 5 sessions and listens for new ones.
   var setSession = function(data) {
-    console.log('Set session:');
-    console.log(data);
     var val = data.val();
     this.displaySession(data.key, val.owner, val.participants);
   }.bind(this);
@@ -156,19 +196,6 @@ Credentials.prototype.unloadSessions = function() {
     sessionsList.removeChild(sessionsList.lastChild);
   }
 }
-
-Credentials.SESSION_TEMPLATE =
-    '<div class="session-container">' +
-      '<div class="session-owner">Unknown</div>' +
-      '<button class="session-join-button">Join</button>' +
-    '</div>';
-
-Credentials.SESSION_JOINED_TEMPLATE =
-    '<div class="session-joined">' +
-      '<label class="session-joined-label">Currently in session with</label>' +
-      '<div class="session-joined-owner">Unknown</div>' +
-      '<button class="session-leave-button">Leave session</button>' +
-    '</div>';
     
 /**
  * Add DOM elements for a single session
@@ -186,15 +213,9 @@ Credentials.prototype.displaySession = function(key, owner, participants){
     div.setAttribute('id', key);
     this.sessionsList.appendChild(div);
   }
-  div.querySelector('.session-owner').textContent = owner
-  var joinButton = div.querySelector('.session-join-button')
-  joinButton.textContent = 'Join ' + owner
-  
-  // Check if we already joined that session
-  getSession(
-    function(currKey) {
-      joinButton.disabled = (currKey == key);
-    });
+  div.querySelector('.session-owner').textContent = owner;
+  var joinButton = div.querySelector('.session-join-button');
+  joinButton.textContent = 'Join ' + owner;
   
   // Listen to button
   joinButton.addEventListener('click', function(e) {
@@ -205,28 +226,97 @@ Credentials.prototype.displaySession = function(key, owner, participants){
 }
 
 /**
+ * Add DOM elements for the current session
+ * @param{arr} session Array containing session's key and owner
+ */
+Credentials.prototype.displayCurrentSession = function(session) {
+  if (session) {
+    var div = document.getElementById(session.key);
+    // If an element for that session does not exist yet we create it.
+    if (!div) {
+      var container = document.createElement('div');
+      container.innerHTML = Credentials.SESSION_JOINED_TEMPLATE;
+      div = container.firstChild;
+      div.setAttribute('id', session.key);
+      this.sessionsList.appendChild(div);
+    }
+    div.querySelector('.session-joined-owner').textContent = session.owner;
+    var leaveButton = div.querySelector('.session-leave-button');
+    leaveButton.textContent = 'Leave session';
+    
+    // Listen to button
+    leaveButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      this.leaveSession();
+    }.bind(this));
+  }  
+}
+
+/**
+ * Create a new session
+ */
+Credentials.prototype.newSession = function() {
+  var request = {
+    greeting   : 'createSession'
+  };
+  
+  var onSuccess = function(session) {
+    this.unloadSessions()
+    this.displayCurrentSession(session)
+  }.bind(this)
+  
+  chrome.runtime.sendMessage(request, onSuccess);
+}
+
+/**
  * Join an existing session
  *
  * @param{string} sessionKey Session key
- * @param{string} owner Session's owner
  */
-Credentials.prototype.joinSession = function(sessionKey) {
+Credentials.prototype.joinSession = function(sessionKey, owner) {
   var request = {
-    greeting : 'joinSession',
-    sessionKey : sessionKey
+    greeting   : 'joinSession',
+    sessionKey : sessionKey,
+    owner      : owner
   };
   
-  chrome.runtime.sendMessage(request);
+  var onSuccess = function(session) {
+    this.unloadSessions()
+    this.displayCurrentSession(session)
+  }.bind(this)
+  
+  chrome.runtime.sendMessage(request, onSuccess);
 }
 
-//TODO: leaveSession
-Credentials.prototype.leaveSession = function(sessionKey, userKey) {
+/**
+ * Leave current session
+ */
+Credentials.prototype.leaveSession = function() {
+  console.log('Credentials leaving session')
+  var request = {
+    greeting : 'leaveSession'
+  };
   
+  var onSuccess = function(session) {
+    this.unloadSessions()
+    this.loadSessions()
+  }.bind(this)
+  
+  chrome.runtime.sendMessage(request, onSuccess);
 }
 
-//TODO: createSession
-Credentials.prototype.createSession = function(sessionKey, userKey) {
-  
+Credentials.prototype.activate = function() {
+  // Check if code was injected already
+  chrome.runtime.sendMessage({greeting : 'activate'},
+    function(isActivated) {
+        if (!isActivated) {
+          chrome.tabs.executeScript(null, {file: "./scripts/utilities.js"});
+          chrome.tabs.executeScript(null, {file: "./scripts/mouseSimulator.js"});
+          chrome.tabs.executeScript(null, {file: "./scripts/VideoController.js"});
+          document.getElementById('activate-button').disabled = true;
+          document.getElementById('sign-in-button').disabled = false;
+        }
+    });
 }
 
 /**
@@ -242,24 +332,6 @@ function isActivated(callback) {
 function getSession(callback) {
   chrome.runtime.sendMessage({greeting : 'getSession'}, callback);
 }
-
-/**
- * Injects javascript code in the Netflix page
- */
-function injectScript() {
-  // Check if code was injected already
-  chrome.runtime.sendMessage({greeting : 'activate'},
-    function(isActivated) {
-        if (!isActivated) {
-          chrome.tabs.executeScript(null, {file: "./scripts/utilities.js"});
-          chrome.tabs.executeScript(null, {file: "./scripts/mouseSimulator.js"});
-          chrome.tabs.executeScript(null, {file: "./scripts/VideoController.js"});
-          document.getElementById('activate-button').disabled = true;
-          document.getElementById('sign-in-button').disabled = false;
-        }
-    });
-}
- 
  
 window.onload = function() {
   var credentials = new Credentials();
