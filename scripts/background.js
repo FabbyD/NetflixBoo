@@ -117,17 +117,14 @@ Manager.prototype.messageHandler = function(request, sender, sendResponse) {
 }
 
 Manager.prototype.handleControllerMsg = function(request, sender, sendResponse) {
-  if (this.connected()) {
-  
-    if (request.state == State.PLAYING || request.state == State.PAUSED) {
-      console.log('Video ' + request.state + ' at ' + request.time);
-      this.updateFirebase(request.state, request.time);
-    }
+  if (this.connected() && (request.state == utils.state.PLAYING || request.state == utils.state.PAUSED)) {
+    console.log('Video ' + request.state + ' at ' + request.time);
+    this.updateFirebase(request.state, request.time);
+  }
 
-    else if (request.state == State.UNLOADED) {
-      console.log('Netflix unloaded');
-      this.unloadApp();
-    }
+  else if (request.state == utils.state.UNLOADED) {
+    console.log('Netflix unloaded');
+    this.unloadApp();
   }
 }
 
