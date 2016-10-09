@@ -3,25 +3,26 @@
  * Desc: Various utilities to be used in Netflix Boo
  * Author: Fabrice Dugas
  *****************************************************************************/
- 
-var State = {
+
+var utils = {};
+
+utils.keys = {
+  a : 65,
+  space : 32
+};
+
+utils.state = {
    PLAYING : 'playing',
    PAUSED : 'paused',
    CONNECTED : 'connected',
    UNLOADED : 'unloaded'
 };
 
-var SessionState = {
-  JOINED : 'joined',
-  FAILED : 'failed'
+//TODO: Add request types here
+utils.request = {
+  
 };
 
-var Message = {
-  
-}
-
-var utils = {
-  isNetflixOn : function(url) {
-    return url.match(/https:\/\/www.netflix.com\/watch\//)
-  }
+utils.isNetflixOn = function(url) {
+  return url.match(/https:\/\/www.netflix.com\/watch\//)
 }

@@ -19,8 +19,10 @@ o Test the response time to do: Netflix->background->server->background->Netflix
 x Find a better way to manage actions
 x Add listener to participants when session is created that kills the session when the owner leaves/no participants are left
 
-o Listen to arrow keys
+- Listen to arrow keys
 
-o Fix precision
-o Fix paragraph seek and/or scrubber hidden seek
+? Fix precision
+x Fix paragraph seek and/or scrubber hidden seek
 o Refactor VideoController.playButtonHandler and scrubberHandler into one function
+
+o Add listener to child_removed when sessions are removed to update the sessions list
