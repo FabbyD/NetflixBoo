@@ -29,8 +29,7 @@ chrome.runtime.onInstalled.addListener(function (details) {
  * Manager for netflix boo
  */
 function Manager() {
-  // Keeps track of activation
-  this.activated = false;
+  this.activated = false; // Keeps track of activation
   
   // Listen for messages from scripts
   chrome.runtime.onMessage.addListener(this.messageHandler.bind(this));
@@ -62,58 +61,9 @@ Manager.prototype.messageHandler = function(request, sender, sendResponse) {
   if (sender.tab) {
     this.handleControllerMsg(request, sender, sendResponse)
   }
-  
-  else if (request.greeting == 'activate') {
-    sendResponse(this.activated)
-    this.activated = true
+  else {
+    this.handleUIMsg(request, sender, sendResponse)
   }
-  
-  else if (request.greeting == 'isActivated') {
-    sendResponse(this.activated)
-  }
-  
-  else if (request.greeting == 'createSession') {
-    this.session = new Session()
-    
-    // Add listener to new actions
-    var videoRef = this.session.child('video')
-    videoRef.on('child_changed', this.handleNewAction.bind(this))
-    
-    var farewell = {
-      key   : this.session.key,
-      owner : this.session.owner
-    }
-    sendResponse(farewell)
-  }
-  
-  else if (request.greeting == 'joinSession') {
-    this.session = new Session(request.sessionKey, request.owner)
-    this.session.join()
-    
-    // Add listener to new actions
-    var videoRef = this.session.child('video')
-    videoRef.on('child_changed', this.handleNewAction.bind(this))
-    
-    var farewell = {
-      key   : this.session.key,
-      owner : this.session.owner
-    }
-    sendResponse(farewell)
-  }
-  
-  else if (request.greeting == 'leaveSession') {
-    console.log('Background leaving session')
-    this.removeUserFromSession(sendResponse)
-  }
-  
-  else if (request.greeting == 'getSession') {
-    var farewell = !this.session ? null : {
-      key : this.session.key,
-      owner : this.session.owner
-    }
-    sendResponse(farewell)
-  }
-  
 }
 
 Manager.prototype.handleControllerMsg = function(request, sender, sendResponse) {
@@ -128,6 +78,74 @@ Manager.prototype.handleControllerMsg = function(request, sender, sendResponse) 
   }
 }
 
+Manager.prototype.handleUIMsg = function(request, sender, sendResponse) {
+  var rtype = utils.popup.requests;
+  
+  switch(request.greeting) {
+    case rtype.ACTIVATE:
+      sendResponse(this.activated);
+      this.activated = true;
+      break;
+      
+    case rtype.IS_ACTIVATED:
+      sendResponse(this.activated);
+      break;
+      
+    case rtype.CREATE_SESSION:
+      this.createSession(sendResponse);
+      break;
+      
+    case rtype.JOIN_SESSION:
+      this.joinSession(request, sendResponse);
+      break;
+      
+    case rtype.LEAVE_SESSION:
+      this.removeUserFromSession(sendResponse)
+      break;
+      
+    case rtype.GET_SESSION:
+      var farewell = !this.session ? null : {
+        key : this.session.key,
+        owner : this.session.owner
+      }
+      sendResponse(farewell)
+      break;
+      
+    default:
+      console.log('Received unknown request.')
+      break;
+  };
+}
+
+Manager.prototype.createSession = function(sendResponse) {
+  this.session = new Session();
+    
+  // Add listener to new actions
+  var videoRef = this.session.child('video');
+  videoRef.on('child_changed', this.handleNewAction.bind(this));
+  
+  var farewell = {
+    key   : this.session.key,
+    owner : this.session.owner
+  };
+  sendResponse(farewell);
+}
+
+Manager.prototype.joinSession = function(request, sendResponse) {
+  this.session = new Session(request.sessionKey, request.owner);
+  this.session.join();
+  
+  // Add listener to new actions
+  var videoRef = this.session.child('video');
+  videoRef.on('child_changed', this.handleNewAction.bind(this));
+  
+  var farewell = {
+    key   : this.session.key,
+    owner : this.session.owner
+  };
+  sendResponse(farewell);
+}
+
 Manager.prototype.updateFirebase = function(state, time) {
   
   var video = this.session.child('video');
@@ -140,19 +158,18 @@ Manager.prototype.updateFirebase = function(state, time) {
       lastUpdatedTime : time,
       lastTimePushed  : date.getTime()
     }
-  })
+  });
 }
 
 Manager.prototype.handleNewAction = function(video) {
   var val = video.val();
-  var key = video.key;
   
-  console.log('new action')
-  console.log(val)
+  console.log('new action');
+  console.log(val);
   
   if (val.user != this.session.userRef.key) {
     console.log('Action from other user: ' + val.state + ' ' + val.lastUpdatedTime);
-    this.sendMessage(val.state, val.lastUpdatedTime);
+    this.sendLastAction(val.state, val.lastUpdatedTime);
   }
   else {
     console.log('Action from myself: ' + val.state + ' ' + val.lastUpdatedTime);
@@ -165,8 +182,8 @@ Manager.prototype.removeUserFromSession = function(callback) {
     var onSuccess = function() {
       if (callback) callback()
       this.session = null
-    }.bind(this)
-    this.session.leave(onSuccess)
+    }.bind(this);
+    this.session.leave(onSuccess);
   }
 }
 
@@ -180,15 +197,24 @@ Manager.prototype.connected = function() {
   return (this.session && this.session.userRef);
 }
 
-Manager.prototype.sendMessage = function(state, time) {
+Manager.prototype.trySending = function(state, time) {
+  console.log('Trying to send new action');
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    if (tabs[0] && utils.isNetflixOn(tabs[0].url)) {
+      chrome.tabs.sendMessage(tabs[0].id, {state : state, time : time});
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+  }.bind(this));
+}
+
+Manager.prototype.sendLastAction = function(state, time) {
+  if (this.intervalId) clearInterval(this.intervalId); // Clear previous try
+  
   if (this.activated) {
-    console.log('Trying to send message: ' + state + ' ' + time);
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-      if (utils.isNetflixOn(tabs[0].url)) {
-        console.log('In netflix')
-        chrome.tabs.sendMessage(tabs[0].id, {state : state, time : time}); 
-      }
-    });
+    this.intervalId = setInterval(function() {
+      this.trySending(state, time)
+    }.bind(this), 500)
   }
 }
 
@@ -196,6 +222,4 @@ function initApp() {
   var manager = new Manager();
 }
 
-window.onload = function() {
-  initApp();
-};
+window.onload = initApp;
