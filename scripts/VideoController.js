@@ -105,34 +105,38 @@ VideoController.prototype.seek = function(time) {
   
   this.showControls();
   
-  var handle = this.handle;
-  var rect = handle.getBoundingClientRect();
-  var centerX = rect.left + rect.width / 2;
-  var centerY = rect.top + rect.height / 2;
-  
-  // Calculate position to seek to
-  var posX = this.time2pos(time);
-  var posY = centerY;
-  
-  // Grab handle...
-  var grab = createFakeMouseEvent("mousedown", centerX, centerY);
-  handle.dispatchEvent(grab);
-  
-  // ... drag to seek position...
-  var drag = createFakeMouseEvent("mousemove", posX, posY);
-  handle.dispatchEvent(drag);
-  
-  // ... and finally drop
-  var drop = createFakeMouseEvent("mouseup", posX, posY);
-  handle.dispatchEvent(drop);
-  
-  this.hideControls();
+  setTimeout(function() {
+    var handle = this.handle;
+    var rect = handle.getBoundingClientRect();
+    var centerX = rect.left + rect.width / 2;
+    var centerY = rect.top + rect.height / 2;
+    
+    // Calculate position to seek to
+    var posX = this.time2pos(time);
+    var posY = centerY;
+    
+    // Grab handle...
+    var grab = createFakeMouseEvent("mousedown", centerX, centerY);
+    handle.dispatchEvent(grab);
+    
+    // ... drag to seek position...
+    var drag = createFakeMouseEvent("mousemove", posX, posY);
+    handle.dispatchEvent(drag);
+    
+    // ... and finally drop
+    var drop = createFakeMouseEvent("mouseup", posX, posY);
+    handle.dispatchEvent(drop);
+    
+    setTimeout(function() {
+      this.hideControls();
+    }.bind(this), 10);
+  }.bind(this),10);
 }
 
 VideoController.prototype.messageHandler = function(request, sender, sendResponse) {
   
   var currentTime = this.video.currentTime
-  if (currentTime < request.time - 1 || currentTime > request.time + 1) { 
+  if (currentTime < request.time - 0.5 || currentTime > request.time + 0.5) { 
     this.seek(request.time)
   }
   
@@ -171,6 +175,14 @@ function initController(){
       var state = (paused ? utils.state.PAUSED : utils.state.PLAYING);
       var time = controller.video.currentTime;
       controller.sendMessage(state, time);
+    }
+    
+    if (key == utils.keys.a) {
+      console.log('\'a\' pressed');
+      setTimeout(function() {
+        console.log('15 secs passed');
+        controller.seek(300);
+      }, 15000);
     }
     
   };
