@@ -257,7 +257,7 @@ Credentials.prototype.displayCurrentSession = function(session) {
  */
 Credentials.prototype.newSession = function() {
   var request = {
-    greeting   : 'createSession'
+    greeting : utils.popup.requests.CREATE_SESSION
   };
   
   var onSuccess = function(session) {
@@ -275,7 +275,7 @@ Credentials.prototype.newSession = function() {
  */
 Credentials.prototype.joinSession = function(sessionKey, owner) {
   var request = {
-    greeting   : 'joinSession',
+    greeting   : utils.popup.requests.JOIN_SESSION,
     sessionKey : sessionKey,
     owner      : owner
   };
@@ -294,7 +294,7 @@ Credentials.prototype.joinSession = function(sessionKey, owner) {
 Credentials.prototype.leaveSession = function() {
   console.log('Credentials leaving session')
   var request = {
-    greeting : 'leaveSession'
+    greeting : utils.popup.requests.LEAVE_SESSION
   };
   
   var onSuccess = function(session) {
@@ -307,7 +307,7 @@ Credentials.prototype.leaveSession = function() {
 
 Credentials.prototype.activate = function() {
   // Check if code was injected already
-  chrome.runtime.sendMessage({greeting : 'activate'},
+  chrome.runtime.sendMessage({greeting : utils.popup.requests.ACTIVATE},
     function(isActivated) {
         if (!isActivated) {
           chrome.tabs.executeScript(null, {file: "./scripts/utilities.js"});
@@ -323,14 +323,14 @@ Credentials.prototype.activate = function() {
  * Asks background.js if the extension was activated by user
  */
 function isActivated(callback) {
-  chrome.runtime.sendMessage({greeting : 'isActivated'}, callback);
+  chrome.runtime.sendMessage({greeting : utils.popup.requests.IS_ACTIVATED}, callback);
 }
 
 /**
  * Asks background.js for the current session key
  */
 function getSession(callback) {
-  chrome.runtime.sendMessage({greeting : 'getSession'}, callback);
+  chrome.runtime.sendMessage({greeting : utils.popup.requests.GET_SESSION}, callback);
 }
  
 window.onload = function() {
