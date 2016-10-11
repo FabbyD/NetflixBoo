@@ -1,28 +1,24 @@
+# Priority
+? Fix paragraph seek and/or scrubber hidden seek
+
+# Optional
 o Change icon to heart
 o Empty heart when off
 o Full heart when on
+o Check server to see if user is already connected
+o Test the response time to do: Netflix->background->server->background->Netflix
+o Refactor VideoController.playButtonHandler and scrubberHandler into one function
+o Add listener to child_removed when sessions are removed to update the sessions list
 
+# Done
 x Make Object Session
 x Create sessions
 x Join sessions
 x Leave sessions
-~ Check server to see if user is already connected
-
 x Listen to messages in background.js
 x Listen to messages in VideoController.js
 x Send messages from background when push from Firebase using chrome.sendMessage()
 x Send messages from Netflix when video is played, paused or seeked (video.onPlay?, video.onSeek?) using chrome.sendMessage()
-
-x Add delay when syncing video playback
-o Test the response time to do: Netflix->background->server->background->Netflix
-
 x Find a better way to manage actions
 x Add listener to participants when session is created that kills the session when the owner leaves/no participants are left
-
-- Listen to arrow keys
-
 ? Fix precision
-x Fix paragraph seek and/or scrubber hidden seek
-o Refactor VideoController.playButtonHandler and scrubberHandler into one function
-
-o Add listener to child_removed when sessions are removed to update the sessions list
