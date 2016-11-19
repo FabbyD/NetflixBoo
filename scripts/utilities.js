@@ -6,11 +6,6 @@
 
 var utils = {};
 
-utils.keys = {
-  a : 65,
-  space : 32
-};
-
 utils.state = {
    PLAYING : 'playing',
    PAUSED : 'paused',

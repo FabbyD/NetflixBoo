@@ -12,7 +12,7 @@ var rule1 = {
 			pageUrl : {
 				hostEquals : 'www.netflix.com',
 				schemes : ['https'],
-				pathPrefix : '/watch/'
+				pathPrefix : '/title/'
 			}
 		})
 	],

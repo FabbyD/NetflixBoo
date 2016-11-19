@@ -6,29 +6,30 @@
 
 function VideoController() {
   // Shortcuts to DOM elements
-  this.player = document.getElementById('netflix-player');
+  this.player = document.getElementsByClassName('NFPlayer')[0];
   this.video = document.getElementsByTagName('video')[0];
-  this.playButton = document.getElementsByClassName("player-control-button player-play-pause")[0];
-  this.scrubber = document.getElementById('scrubber-component');
-  this.handle = document.getElementsByClassName('player-scrubber-handle')[0];
+  this.scrubberBar = document.getElementsByClassName('scrubber-bar')[0];
+  this.scrubberHead = document.getElementsByClassName('scrubber-head')[0];
+  this.playButton = document.getElementsByClassName('button-nfplayerPause')[0];
+  
+  // Try with other version maybe
+  if (!this.playButton){
+    this.playButton = document.getElementsByClassName('button-nfplayerPlay')[0];
+  }
   
   // Play button
   this.playButton.addEventListener('click', this.playButtonHandler.bind(this));
   
   // Video seeking
-  this.scrubber.addEventListener('mouseup', this.scrubberHandler.bind(this));
+  this.scrubberBar.addEventListener('mouseup', this.scrubberBarHandler.bind(this));
   
   // Listen to Manager
   chrome.runtime.onMessage.addListener(this.messageHandler.bind(this));
 }
 
 VideoController.prototype.showControls = function() {
-  // I don't think getting the actual position of the scrubber is necessary but whatever
-  var rect = this.scrubber.getBoundingClientRect()
-  var x = rect.left + rect.width/2
-  var y = rect.top + rect.height/2
-  var move = createFakeMouseEvent("mousemove", x, y);
-  this.scrubber.dispatchEvent(move)
+  var move = createFakeMouseEvent("mousemove", 0, 0);
+  this.player.dispatchEvent(move)
 }
 
 VideoController.prototype.hideControls = function() {
@@ -39,16 +40,17 @@ VideoController.prototype.hideControls = function() {
 VideoController.prototype.play = function() {
   var paused = this.video.paused;
   if (paused){
-    var click = createFakeMouseEvent('click', 0, 0);
-    this.playButton.dispatchEvent(click);
+    var click = createFakeMouseEvent("click", 0, 0);
+    this.playButton.dispatchEvent(click)
   }
 }
 
 VideoController.prototype.pause = function() {
   var paused = this.video.paused;
+  console.log('Paused: ' + paused)
   if (!paused){
-    var click = createFakeMouseEvent('click', 0, 0);
-    this.playButton.dispatchEvent(click);
+    var click = createFakeMouseEvent("click", 0, 0);
+    this.playButton.dispatchEvent(click)
   }
 }
 
@@ -63,7 +65,7 @@ VideoController.prototype.playButtonHandler = function(e) {
   }
 }
 
-VideoController.prototype.scrubberHandler = function(e) {
+VideoController.prototype.scrubberBarHandler = function(e) {
   // Verify that it is not a simulated click
   if (!e.fake) {
     var paused = this.video.paused;
@@ -76,22 +78,22 @@ VideoController.prototype.scrubberHandler = function(e) {
   }
 }
 
-// Convert time in seconds to a position on the scrubber
+// Convert time in seconds to a position on the scrubberBar
 VideoController.prototype.time2pos = function(time) {
-  var rect = this.scrubber.getBoundingClientRect();
+  var rect = this.scrubberBar.getBoundingClientRect();
   var videoLength = this.video.seekable.end(0);
   var pos = rect.left + time/videoLength*rect.width;
   
-  // Limit to scrubber dimensions
+  // Limit to scrubberBar dimensions
   pos = pos >= rect.right ? rect.right : pos
   pos = pos <= rect.left  ? rect.left  : pos
   
   return pos;
 }
 
-// Convert a position on the scrubber to a time in seconds
+// Convert a position on the scrubberBar to a time in seconds
 VideoController.prototype.pos2time = function(posX) {
-  var rect = this.scrubber.getBoundingClientRect();
+  var rect = this.scrubberBar.getBoundingClientRect();
   var offsetLeft = rect.left;
   var width = rect.width;
   var prct = (posX - offsetLeft)/width;
@@ -106,8 +108,8 @@ VideoController.prototype.seek = function(time) {
   this.showControls();
   
   setTimeout(function() {
-    var handle = this.handle;
-    var rect = handle.getBoundingClientRect();
+    var scrubberHead = this.scrubberHead;
+    var rect = scrubberHead.getBoundingClientRect();
     var centerX = rect.left + rect.width / 2;
     var centerY = rect.top + rect.height / 2;
     
@@ -115,17 +117,17 @@ VideoController.prototype.seek = function(time) {
     var posX = this.time2pos(time);
     var posY = centerY;
     
-    // Grab handle...
+    // Grab scrubberHead...
     var grab = createFakeMouseEvent("mousedown", centerX, centerY);
-    handle.dispatchEvent(grab);
+    scrubberHead.dispatchEvent(grab);
     
     // ... drag to seek position...
     var drag = createFakeMouseEvent("mousemove", posX, posY);
-    handle.dispatchEvent(drag);
+    scrubberHead.dispatchEvent(drag);
     
     // ... and finally drop
     var drop = createFakeMouseEvent("mouseup", posX, posY);
-    handle.dispatchEvent(drop);
+    scrubberHead.dispatchEvent(drop);
     
     setTimeout(function() {
       this.hideControls();
@@ -150,18 +152,37 @@ VideoController.prototype.messageHandler = function(request, sender, sendRespons
 }
 
 VideoController.prototype.sendMessage = function(state, time) {
+  console.log('Trying to send: ' + state + ' ' + time)
   chrome.runtime.sendMessage({state : state, time : time});
+}
+
+VideoController.prototype.test = function() {
+  console.log('Starting set of tests!')
+  
+  setTimeout(function(){
+    console.log('Showing controls')
+    this.showControls()
+    
+    setTimeout(function(){
+      console.log('Hiding controls')
+      this.hideControls()
+    }.bind(this), 2000)
+  }.bind(this),10000)
+  
 }
 
 function initController(){
   var controller;
   var id = setInterval(function() {
-    var controls = document.getElementsByClassName('player-control-bar')[0];
+    var controls = document.getElementsByClassName('main-controls')[0];
     if (controls) {
       console.log('Netflix controls are ready');
-      controller = new VideoController();
-      controller.pause();
       clearInterval(id);
+      
+      controller = new VideoController();
+      setTimeout(function(){
+        controller.pause();
+      }, 500)
     }
   }, 100);
   
@@ -170,19 +191,51 @@ function initController(){
     var key = e.keyCode ? e.keyCode : e.which;
     
     // Space bar
-    if (key == utils.keys.space) {
+    if (key == ' '.charCodeAt()) {
       var paused = controller.video.paused;
       var state = (paused ? utils.state.PAUSED : utils.state.PLAYING);
       var time = controller.video.currentTime;
       controller.sendMessage(state, time);
     }
     
-    if (key == utils.keys.a) {
+    else if (key == 'A'.charCodeAt()) {
       console.log('\'a\' pressed');
       setTimeout(function() {
-        console.log('15 secs passed');
-        controller.seek(300);
-      }, 15000);
+        console.log('5 secs passed');
+        controller.seek(600);
+      }, 5000);
+    }
+    
+    else if (key == 'B'.charCodeAt()) {
+      console.log('\'b\' pressed');
+      setTimeout(function() {
+        console.log('5 secs passed');
+        controller.play();
+      }, 5000);
+    }
+    
+    else if (key == 'C'.charCodeAt()) {
+      console.log('\'c\' pressed');
+      setTimeout(function() {
+        console.log('5 secs passed');
+        controller.pause();
+      }, 5000);
+    }
+    
+    else if (key == 'D'.charCodeAt()) {
+      console.log('\'d\' pressed');
+      setTimeout(function() {
+        console.log('5 secs passed');
+        controller.showControls();
+      }, 5000);
+    }
+    
+    else if (key == 'E'.charCodeAt()) {
+      console.log('\'e\' pressed');
+      setTimeout(function() {
+        console.log('5 secs passed');
+        controller.hideControls();
+      }, 5000);
     }
     
   };
@@ -192,8 +245,10 @@ function initController(){
     controller.sendMessage(utils.state.UNLOADED);
   });
   
+  
+  console.log('videoController injected');
+  
 };
 
 // Initialize the controller when the script is injected
-console.log('videoController injected');
 initController();
