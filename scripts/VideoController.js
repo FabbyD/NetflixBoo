@@ -39,7 +39,9 @@ VideoController.prototype.hideControls = function() {
 
 VideoController.prototype.play = function() {
   var paused = this.video.paused;
+  console.log('Paused: ' + paused)
   if (paused){
+    console.log('Play')
     var click = createFakeMouseEvent("click", 0, 0);
     this.playButton.dispatchEvent(click)
   }
@@ -49,6 +51,7 @@ VideoController.prototype.pause = function() {
   var paused = this.video.paused;
   console.log('Paused: ' + paused)
   if (!paused){
+    console.log('Pause')
     var click = createFakeMouseEvent("click", 0, 0);
     this.playButton.dispatchEvent(click)
   }
@@ -142,11 +145,14 @@ VideoController.prototype.messageHandler = function(request, sender, sendRespons
     this.seek(request.time)
   }
   
-  if (request.state == utils.state.PLAYING) {
-    this.play()
-  }
+  console.log(request);
+  console.log(utils.state.PLAYING);
   
-  else if (request.state == utils.state.PAUSED) {
+  if (request.state == utils.state.PLAYING) {
+    console.log('request to play')
+    this.play()
+  }else if (request.state == utils.state.PAUSED) {
+    console.log('request to pause')
     this.pause()
   }
 }

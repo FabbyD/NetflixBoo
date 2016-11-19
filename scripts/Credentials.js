@@ -10,10 +10,15 @@
 function Credentials(){
   // DOM shortcuts
   this.head = document.getElementsByTagName('h3')[0];
+  this.mainContainer = document.getElementsByClassName('main-container')[0];
   this.sessionsList = document.getElementsByClassName('sessions-container')[0];
   this.activateButton = document.getElementById('activate-button');
   this.signInButton = document.getElementById('sign-in-button');
   this.signInStatus = document.getElementById('sign-in-status');
+  this.createSessionButton = document.getElementById('create-session-button');
+  
+  // Add listener to new session button
+  this.createSessionButton.addEventListener('click', this.newSession.bind(this))
   
   this.initFirebase()
   
@@ -21,21 +26,23 @@ function Credentials(){
 }
 
 Credentials.SESSION_TEMPLATE =
-    '<div class="session-container">' +
-      '<label class="session-owner">Unknown</label>' +
-      '<div><button class="session-join-button">Join</button></div>' +
-    '</div>';
-
-Credentials.SESSION_JOINED_TEMPLATE =
-    '<div class="session-joined">' +
-      '<label class="session-joined-label">Currently in session with</label>' +
-      '<div class="session-joined-owner">UNKNOWN</div>' +
-      '<div><button class="session-leave-button">Leave session</button></div>' +
-    '</div>';
+  '<div class="row vertical-align ">' +
+    '<div class="col-sm-4">' +
+      '<div class="owner-picture-container">' +
+        '<img class="owner-picture" src="../images/pacman64.png" alt="Owner\'s picture">' +
+      '</div>' +
+    '</div>' +
+    '<div class="col-sm-4">' +
+      '<div class="owner-name-container text-center">' +
+        'Whitney' +
+      '</div>' +
+    '</div>' +
+    '<div class="col-sm-4">' +
+      '<button class="session-button">Button</button>' +
+    '</div>' +
+  '</div>'
 
 Credentials.CREATE_SESSION_BUTTON_ID = 'create-session-button'
-Credentials.CREATE_SESSION_BUTTON_TEMPLATE =
-    '<div><button id="create-session-button">New session</button></div>';
     
 Credentials.ORIGINAL_IMG_URL = 'url("../images/pacman64.png")'
 Credentials.LOADING_IMG_URL = 'url("../images/pacman64-loading.gif")'
@@ -106,7 +113,6 @@ Credentials.prototype.onAuthStateChanged = function(user) {
   } else {
     this.signInButton.textContent = 'Sign-in with Google';
     this.signInStatus.textContent = 'Signed out';
-    
     this.unloadSessions(); 
   }
   
@@ -148,6 +154,8 @@ Credentials.prototype.startAuth = function(interactive) {
 Credentials.prototype.startSignIn = function() {
   this.signInButton.disabled = true;
   if (this.auth.currentUser) {
+    this.leaveSession(false);
+    this.createSessionButton.style.display = 'none';
     this.auth.signOut();
   } else {
     // Change head image when trying to sign in
@@ -160,17 +168,9 @@ Credentials.prototype.startSignIn = function() {
  * Load sessions on the page and listens to new ones
  */
 Credentials.prototype.loadSessions = function() {
-  // New session button
-  var div = document.getElementById(Credentials.CREATE_SESSION_BUTTON_ID);
-  if (!div) {
-    var container = document.createElement('div');
-    container.innerHTML = Credentials.CREATE_SESSION_BUTTON_TEMPLATE;
-    div = container.firstChild;
-    this.sessionsList.appendChild(div)
-  }
-  
-  // Add listener to new session button
-  div.querySelector('#create-session-button').addEventListener('click', this.newSession.bind(this))
+  console.log('load sessions')
+  // Display create session button
+  this.createSessionButton.style.display = 'inline-block';
   
   // Reference to the /sessions/ database path.
   this.sessionsRef = this.database.ref('sessions');
@@ -201,9 +201,8 @@ Credentials.prototype.unloadSessions = function() {
  * Add DOM elements for a single session
  * @param{string} key Session key
  * @param{string} owner Session's owner
- * @param{json} participants List of participants?
  */
-Credentials.prototype.displaySession = function(key, owner, participants){
+Credentials.prototype.displaySession = function(key, owner){
   var div = document.getElementById(key);
   // If an element for that session does not exist yet we create it.
   if (!div) {
@@ -213,9 +212,10 @@ Credentials.prototype.displaySession = function(key, owner, participants){
     div.setAttribute('id', key);
     this.sessionsList.appendChild(div);
   }
-  div.querySelector('.session-owner').textContent = owner;
-  var joinButton = div.querySelector('.session-join-button');
-  joinButton.textContent = 'Join ' + owner;
+  div.querySelector('.owner-name-container').textContent = owner;
+  var joinButton = div.querySelector('.session-button');
+  joinButton.className += ' session-join-button';
+  joinButton.textContent = 'Join';
   
   // Listen to button
   joinButton.addEventListener('click', function(e) {
@@ -231,23 +231,27 @@ Credentials.prototype.displaySession = function(key, owner, participants){
  */
 Credentials.prototype.displayCurrentSession = function(session) {
   if (session) {
+    this.createSessionButton.style.display = 'none';
+    
     var div = document.getElementById(session.key);
     // If an element for that session does not exist yet we create it.
     if (!div) {
       var container = document.createElement('div');
-      container.innerHTML = Credentials.SESSION_JOINED_TEMPLATE;
+      container.innerHTML = Credentials.SESSION_TEMPLATE;
       div = container.firstChild;
       div.setAttribute('id', session.key);
       this.sessionsList.appendChild(div);
     }
-    div.querySelector('.session-joined-owner').textContent = session.owner;
-    var leaveButton = div.querySelector('.session-leave-button');
-    leaveButton.textContent = 'Leave session';
+    
+    div.querySelector('.owner-name-container').textContent = session.owner;
+    var leaveButton = div.querySelector('.session-button');
+    leaveButton.className += ' session-leave-button'
+    leaveButton.textContent = 'Leave';
     
     // Listen to button
     leaveButton.addEventListener('click', function(e) {
       e.preventDefault();
-      this.leaveSession();
+      this.leaveSession(true);
     }.bind(this));
   }  
 }
@@ -261,9 +265,11 @@ Credentials.prototype.newSession = function() {
   };
   
   var onSuccess = function(session) {
-    this.unloadSessions()
-    this.displayCurrentSession(session)
-  }.bind(this)
+    this.sessionsRef.off();
+    this.unloadSessions();
+    this.displayCurrentSession(session);
+    this.createSessionButton.style.display='none';
+  }.bind(this);
   
   chrome.runtime.sendMessage(request, onSuccess);
 }
@@ -281,8 +287,9 @@ Credentials.prototype.joinSession = function(sessionKey, owner) {
   };
   
   var onSuccess = function(session) {
-    this.unloadSessions()
-    this.displayCurrentSession(session)
+    this.unloadSessions();
+    this.displayCurrentSession(session);
+    this.createSessionButton.style.display='none';
   }.bind(this)
   
   chrome.runtime.sendMessage(request, onSuccess);
@@ -291,15 +298,16 @@ Credentials.prototype.joinSession = function(sessionKey, owner) {
 /**
  * Leave current session
  */
-Credentials.prototype.leaveSession = function() {
-  console.log('Credentials leaving session')
+Credentials.prototype.leaveSession = function(reload) {
   var request = {
     greeting : utils.popup.requests.LEAVE_SESSION
   };
   
   var onSuccess = function(session) {
     this.unloadSessions()
-    this.loadSessions()
+    if (reload) {
+      this.loadSessions()
+    }
   }.bind(this)
   
   chrome.runtime.sendMessage(request, onSuccess);

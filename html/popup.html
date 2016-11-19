@@ -4,9 +4,12 @@
   <meta charset=utf-8 />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Google Sign In</title>
-
+  
+  <link rel="stylesheet" href="../styles/bootstrap.min.css">
+  <script src="../scripts/jquery-3.1.1.min.js"></script>
+  <script src="../scripts/bootstrap.min.js"></script>
+  
   <link rel="stylesheet" href="../styles/main.css">
-
   <script src="https://www.gstatic.com/firebasejs/3.4.0/firebase.js"></script>
   <script src="../scripts/utilities.js"></script>
   <script src="../scripts/initializeFirebase.js"></script>
@@ -18,11 +21,32 @@
     <button id="activate-button">Activate</button>
     <button id="sign-in-button">Sign-in with Google</button>
     <p>
-      Firebase sign-in status: <span id="sign-in-status">Unknown</span>
+      Sign-in status: <span id="sign-in-status">Unknown</span>
     </p>
   </div>
-  <div class="sessions-container">
-    <label>Sessions</label>
+  
+  <div class="main-container">
+    <div class="container-fluid sessions-container">
+    <!-- Session template
+      <div class="row vertical-align">
+        <div class="col-sm-4">
+          <div class="owner-picture-container">
+            <img class="owner-picture" src="../images/pacman64.png" alt="Owner's picture">
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="owner-name-container">
+            Whitney
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <button class="session-button">Button</button>
+        </div>
+      </div>
+    -->
+    </div>
   </div>
+  <div><button id="create-session-button" style='display:none'>New session</button></div>
+  
 </body>
 </html>
