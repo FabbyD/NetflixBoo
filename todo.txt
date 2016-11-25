@@ -3,6 +3,7 @@ o Fix seek listener to listen even if mouse is not over scrubber bar
 o Fix seek listener when seeking while the video is playing (currently thinks the video is paused)
 o Maybe use play-pause button as indicator of the video state instead 
 o OR keep my own variable to do that... Less safe
+o Fix reset when user leaves title page (i.e. goes back to browse)
 
 # Optional
 o Change icon to heart
