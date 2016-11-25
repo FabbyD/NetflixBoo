@@ -7,6 +7,7 @@
 function VideoController() {
   // Shortcuts to DOM elements
   this.player = document.getElementsByClassName('NFPlayer')[0];
+  this.bigPlayPause = document.getElementsByClassName('nf-big-play-pause')[0];
   this.video = document.getElementsByTagName('video')[0];
   this.scrubberBar = document.getElementsByClassName('scrubber-bar')[0];
   this.scrubberHead = document.getElementsByClassName('scrubber-head')[0];
@@ -17,11 +18,13 @@ function VideoController() {
     this.playButton = document.getElementsByClassName('button-nfplayerPlay')[0];
   }
   
-  // Play button
-  this.playButton.addEventListener('click', this.playButtonHandler.bind(this));
+  // Play/Pause
+  this.playButton.addEventListener('click', this.playPauseButtonHandler.bind(this));
+  this.bigPlayPause.addEventListener('click', this.bigPlayPauseHandler.bind(this));
   
   // Video seeking
-  this.scrubberBar.addEventListener('mouseup', this.scrubberBarHandler.bind(this));
+  // TODO: Listen better... Only works when mouse is on the bar now
+  this.scrubberBar.addEventListener('mouseup', this.seekListener.bind(this));
   
   // Listen to Manager
   chrome.runtime.onMessage.addListener(this.messageHandler.bind(this));
@@ -57,7 +60,7 @@ VideoController.prototype.pause = function() {
   }
 }
 
-VideoController.prototype.playButtonHandler = function(e) {
+VideoController.prototype.playPauseButtonHandler = function(e) {
   // Verify that it is not a simulated click
   if (!e.fake) {
     var paused = this.video.paused;
@@ -68,9 +71,24 @@ VideoController.prototype.playButtonHandler = function(e) {
   }
 }
 
-VideoController.prototype.scrubberBarHandler = function(e) {
+VideoController.prototype.bigPlayPauseHandler = function(e) {
+  // This listener seems to be fired before the video is actually affected so
+  // the video state must be reversed
+  if (!e.fake) {
+    var paused = !this.video.paused;
+    var state = (paused ? utils.state.PAUSED : utils.state.PLAYING);
+    var time = this.video.currentTime;
+    
+    this.sendMessage(state, time);
+  }
+}
+
+VideoController.prototype.seekListener = function(e) {
   // Verify that it is not a simulated click
   if (!e.fake) {
+    // TODO: Find out why video is always considered paused
+    // even when playing. Consider using the play/pause button as
+    // indicator instead?
     var paused = this.video.paused;
     var state = (paused ? utils.state.PAUSED : utils.state.PLAYING);
     var time = this.pos2time(e.clientX);
@@ -186,18 +204,19 @@ function initController(){
       clearInterval(id);
       
       controller = new VideoController();
-      setTimeout(function(){
+      // Make sure video really loaded
+      setTimeout(function() {
         controller.pause();
-      }, 500)
+      }, 100)
     }
   }, 100);
   
-  // Listen to key presses
-  window.onkeydown = function (e) {
+  // Listen to key down (keypress doesn't react to space)
+  document.addEventListener('keydown', function (e) {
     var key = e.keyCode ? e.keyCode : e.which;
     
-    // Space bar
     if (key == ' '.charCodeAt()) {
+      console.log('space pressed');
       var paused = controller.video.paused;
       var state = (paused ? utils.state.PAUSED : utils.state.PLAYING);
       var time = controller.video.currentTime;
@@ -244,7 +263,7 @@ function initController(){
       }, 5000);
     }
     
-  };
+  });
   
   // Listen to page refresh or exit
   window.addEventListener('unload', function() {

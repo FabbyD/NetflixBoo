@@ -1,5 +1,8 @@
 # Priority
-? Fix paragraph seek and/or scrubber hidden seek
+o Fix seek listener to listen even if mouse is not over scrubber bar
+o Fix seek listener when seeking while the video is playing (currently thinks the video is paused)
+o Maybe use play-pause button as indicator of the video state instead 
+o OR keep my own variable to do that... Less safe
 
 # Optional
 o Change icon to heart
@@ -22,3 +25,4 @@ x Send messages from Netflix when video is played, paused or seeked (video.onPla
 x Find a better way to manage actions
 x Add listener to participants when session is created that kills the session when the owner leaves/no participants are left
 ? Fix precision
+x Fix paragraph seek and/or scrubber hidden seek
