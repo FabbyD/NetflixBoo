@@ -25,5 +25,5 @@ utils.popup.requests = {
 }
 
 utils.isNetflixOn = function(url) {
-  return url.match(/https:\/\/www.netflix.com\/title\//)
+  return url.match(/https:\/\/www.netflix.com\/watch\//)
 }
