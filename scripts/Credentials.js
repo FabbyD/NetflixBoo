@@ -13,12 +13,9 @@ function Credentials(){
   this.mainContainer = document.getElementsByClassName('main-container')[0];
   this.sessionsList = document.getElementsByClassName('sessions-container')[0];
   this.activateButton = document.getElementsByClassName('activate-button')[0];
-  this.signInButton = document.getElementById('sign-in-button');
-  this.signInStatus = document.getElementById('sign-in-status');
-  this.createSessionButton = document.getElementById('create-session-button');
-  
-  // Add listener to new session button
-  this.createSessionButton.addEventListener('click', this.newSession.bind(this))
+  this.signInButton = document.getElementsByClassName('sign-in-button')[0];
+  this.userName = document.getElementsByClassName('user-name')[0];
+  this.createSessionButton = document.getElementsByClassName('create-session-button')[0];
   
   this.initFirebase()
   
@@ -27,18 +24,18 @@ function Credentials(){
 
 Credentials.SESSION_TEMPLATE =
   '<div class="row vertical-align ">' +
-    '<div class="col-sm-4">' +
+    '<div class="col-xs-4">' +
       '<div class="owner-picture-container">' +
         '<img class="owner-picture" src="../images/pacman64.png" alt="Owner\'s picture">' +
       '</div>' +
     '</div>' +
-    '<div class="col-sm-4">' +
+    '<div class="col-xs-4">' +
       '<div class="owner-name-container text-center">' +
         'Whitney' +
       '</div>' +
     '</div>' +
-    '<div class="col-sm-4">' +
-      '<button class="session-button">Button</button>' +
+    '<div class="col-xs-4">' +
+      '<button type="button" class="btn btn-warning session-button">Button</button>' +
     '</div>' +
   '</div>'
 
@@ -62,20 +59,28 @@ Credentials.prototype.initFirebase = function() {
 
 /**
  * Sets up the user interface.
- * Stole from github.com/friendlychat
  */
 Credentials.prototype.initUI = function() {
   // Check if extension was already activated by user
-  var disableActivateButton = function(isActivated){
-    this.activateButton.disabled = isActivated;
-  }
-  isActivated(disableActivateButton.bind(this));
+  isActivated(function(isActivated){
+    if (isActivated) {
+      this.activated();
+    }
+  }.bind(this));
   
   // Check if user is in session
-  getSession(this.displayCurrentSession.bind(this))
+  getSession(function(session) {
+    if (session) {
+      this.displayCurrentSession(session);
+    } else {
+      // Sessions are loaded when user signs in
+    }
+  }.bind(this));
     
+  // Add listeners
   this.signInButton.addEventListener('click', this.startSignIn.bind(this), false);
   this.activateButton.addEventListener('click', this.activate.bind(this), false);
+  this.createSessionButton.addEventListener('click', this.newSession.bind(this))
  }
 
 /**
@@ -99,21 +104,22 @@ Credentials.prototype.onAuthStateChanged = function(user) {
     var providerData = user.providerData;
     
     this.signInButton.textContent = 'Sign out';
-    this.signInStatus.textContent = 'Signed in';
+    this.userName.textContent = displayName;
     
     // Check if user already joined a session
     var loadSessions = function(session) {
       if (!session) {
+        this.createSessionButton.style.display = 'inline';
         this.loadSessions();
-        console.log('Loading session!')
       }
     }
     getSession(loadSessions.bind(this));
     
   } else {
-    this.signInButton.textContent = 'Sign-in with Google';
-    this.signInStatus.textContent = 'Signed out';
-    this.unloadSessions(); 
+    // User is signed out
+    console.log('user signed out')
+    this.signInButton.textContent = 'Sign in';
+    this.userName.textContent = '';
   }
   
   this.signInButton.disabled = false;
@@ -154,8 +160,8 @@ Credentials.prototype.startAuth = function(interactive) {
 Credentials.prototype.startSignIn = function() {
   this.signInButton.disabled = true;
   if (this.auth.currentUser) {
-    this.leaveSession(false);
-    this.createSessionButton.style.display = 'none';
+    this.leaveSession();
+    this.unloadSessions();
     this.auth.signOut();
   } else {
     // Change head image when trying to sign in
@@ -170,7 +176,7 @@ Credentials.prototype.startSignIn = function() {
 Credentials.prototype.loadSessions = function() {
   console.log('load sessions')
   // Display create session button
-  this.createSessionButton.style.display = 'inline-block';
+  this.createSessionButton.style.display = 'inline';
   
   // Reference to the /sessions/ database path.
   this.sessionsRef = this.database.ref('sessions');
@@ -191,6 +197,7 @@ Credentials.prototype.loadSessions = function() {
  * Remove sessions from the page
  */
 Credentials.prototype.unloadSessions = function() {
+  this.createSessionButton.style.display = 'none';
   var sessionsList = this.sessionsList;
   while (sessionsList.lastChild) {
     sessionsList.removeChild(sessionsList.lastChild);
@@ -303,7 +310,7 @@ Credentials.prototype.leaveSession = function(reload) {
     greeting : utils.popup.requests.LEAVE_SESSION
   };
   
-  var onSuccess = function(session) {
+  var onSuccess = function() {
     this.unloadSessions()
     if (reload) {
       this.loadSessions()
@@ -321,10 +328,16 @@ Credentials.prototype.activate = function() {
           chrome.tabs.executeScript(null, {file: "./scripts/utilities.js"});
           chrome.tabs.executeScript(null, {file: "./scripts/mouseSimulator.js"});
           chrome.tabs.executeScript(null, {file: "./scripts/VideoController.js"});
-          document.getElementById('activate-button').disabled = true;
-          document.getElementById('sign-in-button').disabled = false;
+          this.activated();
         }
-    });
+    }.bind(this));
+}
+
+Credentials.prototype.activated = function () {
+  console.log('app is activated')
+  this.activateButton.style.display = 'none';
+  this.signInButton.style.display = "inline";
+  this.userName.style.display = "inline";
 }
 
 /**

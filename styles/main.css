@@ -57,13 +57,13 @@ div[class^="container"] {
   font-weight: bold;
 }
 .activate-button {
-  width: 75px;
-  height: 30px;
 }
 .sign-in-button {
+  display: none;
 }
-#create-session-button {
+.create-session-button {
   margin-top: 5px;
+  display: none;
 }
 .user-details {
   display: flex;
@@ -71,6 +71,7 @@ div[class^="container"] {
 }
 .user-name {
   padding-right: 5px;
+  display: none;
 }
 
 pre {
