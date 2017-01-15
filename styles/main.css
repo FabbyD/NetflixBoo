@@ -14,6 +14,12 @@ li a {
   text-decoration: underline;
   color: #0288d1;
 }
+div[class^="col-"] {
+  padding: 0;
+}
+div[class^="container"] {
+  margin: 5px;
+}
 .mdl-grid {
   max-width: 1024px;
   margin: auto;
@@ -40,7 +46,6 @@ li a {
   display: flex;
   flex-direction: row;
 }
-
 .vertical-align > [class^="col-"],
 .vertical-align > [class*=" col-"] {
   display: flex;
@@ -51,14 +56,21 @@ li a {
 #sign-in-status {
   font-weight: bold;
 }
-#activate-button {
-  disable : true;
+.activate-button {
+  width: 75px;
+  height: 30px;
 }
-#sign-in-button {
-  disable : true;
+.sign-in-button {
 }
 #create-session-button {
-  margin-top: 5px
+  margin-top: 5px;
+}
+.user-details {
+  display: flex;
+	align-items: center;
+}
+.user-name {
+  padding-right: 5px;
 }
 
 pre {

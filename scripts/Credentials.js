@@ -12,7 +12,7 @@ function Credentials(){
   this.head = document.getElementsByTagName('h3')[0];
   this.mainContainer = document.getElementsByClassName('main-container')[0];
   this.sessionsList = document.getElementsByClassName('sessions-container')[0];
-  this.activateButton = document.getElementById('activate-button');
+  this.activateButton = document.getElementsByClassName('activate-button')[0];
   this.signInButton = document.getElementById('sign-in-button');
   this.signInStatus = document.getElementById('sign-in-status');
   this.createSessionButton = document.getElementById('create-session-button');

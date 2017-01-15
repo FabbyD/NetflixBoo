@@ -16,16 +16,26 @@
   <script src="../scripts/Credentials.js"></script>
 </head>
 <body>
-  <h3>Authentication</h3>
-  <div class="user-details-container">
-    <button id="activate-button">Activate</button>
-    <button id="sign-in-button">Sign-in with Google</button>
-    <p>
-      Sign-in status: <span id="sign-in-status">Unknown</span>
-    </p>
-  </div>
-  
   <div class="main-container">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-xs-6">
+          <h3>Netflix Boo</h3>
+        </div>
+        <div class="col-xs-6">
+          <div class="pull-right user-details">
+            <span class="user-name">Fabrice Dugas</span>
+            <button type="button" class="btn btn-default sign-in-button">Sign-in</button>
+          </div>
+        </div>
+        </div>
+        <div class="row">
+          <div class="col-xs-12" align="center">
+            <button type="button" class="btn btn-primary activate-button">Activate</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="container-fluid sessions-container">
     <!-- Session template
       <div class="row vertical-align">
