@@ -41,7 +41,7 @@ Credentials.SESSION_TEMPLATE =
 
 Credentials.CREATE_SESSION_BUTTON_ID = 'create-session-button'
     
-Credentials.ORIGINAL_IMG_URL = 'url("../images/pacman64.png")'
+Credentials.ORIGINAL_IMG_URL = 'url("../images/logo.png")'
 Credentials.LOADING_IMG_URL = 'url("../images/pacman64-loading.gif")'
 
 /**
@@ -160,7 +160,7 @@ Credentials.prototype.startAuth = function(interactive) {
 Credentials.prototype.startSignIn = function() {
   this.signInButton.disabled = true;
   if (this.auth.currentUser) {
-    this.leaveSession();
+    this.leaveSession(false);
     this.unloadSessions();
     this.auth.signOut();
   } else {
@@ -258,6 +258,7 @@ Credentials.prototype.displayCurrentSession = function(session) {
     // Listen to button
     leaveButton.addEventListener('click', function(e) {
       e.preventDefault();
+      leaveButton.disabled = true;
       this.leaveSession(true);
     }.bind(this));
   }  
@@ -334,7 +335,6 @@ Credentials.prototype.activate = function() {
 }
 
 Credentials.prototype.activated = function () {
-  console.log('app is activated')
   this.activateButton.style.display = 'none';
   this.signInButton.style.display = "inline";
   this.userName.style.display = "inline";
