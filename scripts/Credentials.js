@@ -4,6 +4,8 @@
  * Author: Fabrice Dugas
  *****************************************************************************/
 
+// TODO: Improve this spaghetti mess !! :S
+ 
 /**
  * Credentials constructor
  */
@@ -17,9 +19,12 @@ function Credentials(){
   this.userName = document.getElementsByClassName('user-name')[0];
   this.createSessionButton = document.getElementsByClassName('create-session-button')[0];
   
-  this.initFirebase()
+  this.isActive = false;
+  this.isSignedIn = false;
+  this.currSession = null;
   
-  this.initUI()
+  this.initFirebase();
+  this.initUI();
 }
 
 Credentials.SESSION_TEMPLATE =
@@ -61,19 +66,19 @@ Credentials.prototype.initFirebase = function() {
  * Sets up the user interface.
  */
 Credentials.prototype.initUI = function() {
-  // Check if extension was already activated by user
-  isActivated(function(isActivated){
-    if (isActivated) {
-      this.activated();
+  // Check if user is in session (do this before checking activation)
+  getSession(function(session) {
+    if (session) {
+      this.session = session;
+      this.displayCurrentSession(session);
     }
   }.bind(this));
   
-  // Check if user is in session
-  getSession(function(session) {
-    if (session) {
-      this.displayCurrentSession(session);
-    } else {
-      // Sessions are loaded when user signs in
+  // Check if extension was already activated by user
+  isActivated(function(isActivated){
+    this.isActive = isActivated;
+    if (isActivated) {
+      this.activated();
     }
   }.bind(this));
     
@@ -95,6 +100,7 @@ Credentials.prototype.onAuthStateChanged = function(user) {
   
   if (user) {
     // User is signed in.
+    this.isSignedIn = true;
     var displayName = user.displayName;
     var email = user.email;
     var emailVerified = user.emailVerified;
@@ -108,8 +114,7 @@ Credentials.prototype.onAuthStateChanged = function(user) {
     
     // Check if user already joined a session
     var loadSessions = function(session) {
-      if (!session) {
-        this.createSessionButton.style.display = 'inline';
+      if (!session && this.isActive) {
         this.loadSessions();
       }
     }
@@ -117,7 +122,7 @@ Credentials.prototype.onAuthStateChanged = function(user) {
     
   } else {
     // User is signed out
-    console.log('user signed out')
+    this.isSignedIn = false;
     this.signInButton.textContent = 'Sign in';
     this.userName.textContent = '';
   }
@@ -312,6 +317,7 @@ Credentials.prototype.leaveSession = function(reload) {
   };
   
   var onSuccess = function() {
+    this.session = null;
     this.unloadSessions()
     if (reload) {
       this.loadSessions()
@@ -338,6 +344,14 @@ Credentials.prototype.activated = function () {
   this.activateButton.style.display = 'none';
   this.signInButton.style.display = "inline";
   this.userName.style.display = "inline";
+  this.unloadSessions() // Just in case
+  if (this.session != null) {
+    console.log('Displaying current session (activated)');
+    this.displayCurrentSession(this.session);
+  } else if (this.isSignedIn) {
+    console.log('Loading all sessions (activated)');
+    this.loadSessions();
+  }
 }
 
 /**
