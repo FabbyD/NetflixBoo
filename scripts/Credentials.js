@@ -66,21 +66,40 @@ Credentials.prototype.initFirebase = function() {
  * Sets up the user interface.
  */
 Credentials.prototype.initUI = function() {
-  // Check if user is in session (do this before checking activation)
-  getSession(function(session) {
-    if (session) {
-      this.session = session;
-      this.displayCurrentSession(session);
+  // Ask background for app's state
+  chrome.runtime.sendMessage({greeting : utils.popup.requests.INIT_UI}, function(response) {
+    console.log('Response:')
+    var isActive = response.isActive
+    var session = response.session
+    console.log(isActive)
+    console.log(session)
+    this.isActive = isActive;
+    this.session = session;
+    if (isActive) {
+      this.activated();
+      if (session) {
+        // User is signed in and in session
+        this.displayCurrentSession(session);
+      } else {
+        // Load sessions when user signs in
+      }
     }
   }.bind(this));
   
+  // Check if user is in session
+  // getSession(function(session) {
+    // if (session) {
+      // this.session = session;
+      // this.displayCurrentSession(this.session)
+    // }
+  // }.bind(this));
+  
   // Check if extension was already activated by user
-  isActivated(function(isActivated){
-    this.isActive = isActivated;
-    if (isActivated) {
-      this.activated();
-    }
-  }.bind(this));
+  // isActivated(function(isActivated){
+    // if (isActivated) {
+      // this.activated();
+    // }
+  // }.bind(this));
     
   // Add listeners
   this.signInButton.addEventListener('click', this.startSignIn.bind(this), false);
@@ -231,7 +250,6 @@ Credentials.prototype.displaySession = function(key, owner){
   
   // Listen to button
   joinButton.addEventListener('click', function(e) {
-    e.preventDefault();
     this.joinSession(key, owner);
   }.bind(this));
   
@@ -262,7 +280,6 @@ Credentials.prototype.displayCurrentSession = function(session) {
     
     // Listen to button
     leaveButton.addEventListener('click', function(e) {
-      e.preventDefault();
       leaveButton.disabled = true;
       this.leaveSession(true);
     }.bind(this));
@@ -300,6 +317,7 @@ Credentials.prototype.joinSession = function(sessionKey, owner) {
   };
   
   var onSuccess = function(session) {
+    this.sessionsRef.off();
     this.unloadSessions();
     this.displayCurrentSession(session);
     this.createSessionButton.style.display='none';
@@ -312,13 +330,14 @@ Credentials.prototype.joinSession = function(sessionKey, owner) {
  * Leave current session
  */
 Credentials.prototype.leaveSession = function(reload) {
+  console.log('leaving session')
   var request = {
     greeting : utils.popup.requests.LEAVE_SESSION
   };
   
   var onSuccess = function() {
     this.session = null;
-    this.unloadSessions()
+    this.unloadSessions();
     if (reload) {
       this.loadSessions()
     }
@@ -336,6 +355,7 @@ Credentials.prototype.activate = function() {
           chrome.tabs.executeScript(null, {file: "./scripts/mouseSimulator.js"});
           chrome.tabs.executeScript(null, {file: "./scripts/VideoController.js"});
           this.activated();
+          this.loadSessions();
         }
     }.bind(this));
 }
@@ -344,14 +364,7 @@ Credentials.prototype.activated = function () {
   this.activateButton.style.display = 'none';
   this.signInButton.style.display = "inline";
   this.userName.style.display = "inline";
-  this.unloadSessions() // Just in case
-  if (this.session != null) {
-    console.log('Displaying current session (activated)');
-    this.displayCurrentSession(this.session);
-  } else if (this.isSignedIn) {
-    console.log('Loading all sessions (activated)');
-    this.loadSessions();
-  }
+  this.isActive = true;
 }
 
 /**
@@ -362,7 +375,7 @@ function isActivated(callback) {
 }
 
 /**
- * Asks background.js for the current session key
+ * Asks background.js for the current session information
  */
 function getSession(callback) {
   chrome.runtime.sendMessage({greeting : utils.popup.requests.GET_SESSION}, callback);

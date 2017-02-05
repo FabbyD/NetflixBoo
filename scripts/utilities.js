@@ -16,8 +16,9 @@ utils.state = {
 utils.popup = {}
 
 utils.popup.requests = {
-  ACTIVATE       : 1,
-  IS_ACTIVATED   : 2,
+  INIT_UI        : 1,
+  ACTIVATE       : 2,
+  // IS_ACTIVATED   : 2,
   CREATE_SESSION : 3,
   JOIN_SESSION   : 4,
   LEAVE_SESSION  : 5,

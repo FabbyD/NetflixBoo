@@ -82,14 +82,29 @@ Manager.prototype.handleUIMsg = function(request, sender, sendResponse) {
   var rtype = utils.popup.requests;
   
   switch(request.greeting) {
+    case rtype.INIT_UI:
+      var session = !this.session ? null : {
+          key : this.session.key,
+          owner : this.session.owner
+        }
+      var response = {
+        isActive : this.activated,
+        session  : session
+      }
+      console.log('init ui');
+      console.log(this.activated);
+      console.log(session);
+      sendResponse(response);
+      break;
+      
     case rtype.ACTIVATE:
       sendResponse(this.activated);
       this.activated = true;
       break;
       
-    case rtype.IS_ACTIVATED:
-      sendResponse(this.activated);
-      break;
+    // case rtype.IS_ACTIVATED:
+      // sendResponse(this.activated);
+      // break;
       
     case rtype.CREATE_SESSION:
       this.createSession(sendResponse);
@@ -104,11 +119,11 @@ Manager.prototype.handleUIMsg = function(request, sender, sendResponse) {
       break;
       
     case rtype.GET_SESSION:
-      var farewell = !this.session ? null : {
+      var response = !this.session ? null : {
         key : this.session.key,
         owner : this.session.owner
       }
-      sendResponse(farewell)
+      sendResponse(response)
       break;
       
     default:
