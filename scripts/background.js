@@ -5,8 +5,21 @@
  * Author: Fabrice Dugas
  *****************************************************************************/
 
-// PageAction shenanigans
-var rule1 = {
+/** 
+
+PageAction shenanigans 
+
+**/
+
+/** 
+  Temporary way to set the version of the app
+  0 : Netflix,
+  1 : Youtube
+**/
+var version = 1;
+
+// Netflix
+var netflix = {
 	conditions : [
 		new chrome.declarativeContent.PageStateMatcher({
 			pageUrl : {
@@ -19,9 +32,25 @@ var rule1 = {
 	actions : [new chrome.declarativeContent.ShowPageAction()]
 };
 
+// Youtube
+var youtube = {
+	conditions : [
+		new chrome.declarativeContent.PageStateMatcher({
+			pageUrl : {
+				hostEquals : 'www.youtube.com',
+				schemes : ['https'],
+				pathPrefix : '/watch'
+			}
+		})
+	],
+	actions : [new chrome.declarativeContent.ShowPageAction()]
+};
+
+var rules = [netflix, youtube]
+
 chrome.runtime.onInstalled.addListener(function (details) {
 	chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {
-		chrome.declarativeContent.onPageChanged.addRules([rule1]);
+		chrome.declarativeContent.onPageChanged.addRules([rules[version]]);
 	});
 });
 
@@ -214,17 +243,27 @@ Manager.prototype.connected = function() {
 
 Manager.prototype.trySending = function(state, time) {
   console.log('Trying to send new action');
+  var checkFn = 
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    if (tabs[0] && utils.isNetflixOn(tabs[0].url)) {
+    if (tabs[0] && utils.onPage[version](tabs[0].url)) {
       chrome.tabs.sendMessage(tabs[0].id, {state : state, time : time});
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
   }.bind(this));
+  this.tryCount += 1;
+  
+  if (this.tryCount >= 120) { // Give up after a minute
+    console.log("You're too slow! --Sonic")
+    clearInterval(this.intervalId);
+    this.invervalId = null;
+  }
 }
 
 Manager.prototype.sendLastAction = function(state, time) {
   if (this.intervalId) clearInterval(this.intervalId); // Clear previous try
+  
+  this.tryCount = 0
   
   if (this.activated) {
     this.intervalId = setInterval(function() {

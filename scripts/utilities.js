@@ -25,6 +25,14 @@ utils.popup.requests = {
   GET_SESSION    : 6
 }
 
-utils.isNetflixOn = function(url) {
+// Check if current url is Netflix
+var onNetflix = function(url) {
   return url.match(/https:\/\/www.netflix.com\/watch\//)
 }
+
+// Check if current url is Youtube
+var onYoutube = function(url) {
+  return url.match(/https:\/\/www.youtube.com\/watch/)
+}
+
+utils.onPage = [onNetflix, onYoutube];

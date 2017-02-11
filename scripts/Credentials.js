@@ -1,10 +1,16 @@
 /******************************************************************************
- * File: credentials.js
+ * File: Credentials.js
  * Desc: Handles signing in to Firebase using a Google account
  * Author: Fabrice Dugas
  *****************************************************************************/
 
-// TODO: Improve this spaghetti mess !! :S
+/** 
+  Temporary way to set the version of the app
+  0 : Netflix,
+  1 : Youtube
+**/
+var version = 1
+var controllerFiles = ['VideoController.js', 'YoutubeController.js']
  
 /**
  * Credentials constructor
@@ -351,9 +357,10 @@ Credentials.prototype.activate = function() {
   chrome.runtime.sendMessage({greeting : utils.popup.requests.ACTIVATE},
     function(isActivated) {
         if (!isActivated) {
+          var controllerFile = controllerFiles[version]
           chrome.tabs.executeScript(null, {file: "./scripts/utilities.js"});
           chrome.tabs.executeScript(null, {file: "./scripts/mouseSimulator.js"});
-          chrome.tabs.executeScript(null, {file: "./scripts/VideoController.js"});
+          chrome.tabs.executeScript(null, {file: "./scripts/" + controllerFile});
           this.activated();
           this.loadSessions();
         }
