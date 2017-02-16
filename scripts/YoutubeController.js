@@ -91,9 +91,7 @@ YoutubeController.prototype.messageHandler = function(request, sender, sendRespo
   
   if (request.state == utils.state.PLAYING) {
     this.play()
-  }
-  
-  else if (request.state == utils.state.PAUSED) {
+  } else if (request.state == utils.state.PAUSED) {
     this.pause()
   }
 }

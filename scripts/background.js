@@ -6,52 +6,52 @@
  *****************************************************************************/
 
 /** 
-
-PageAction shenanigans 
-
-**/
-
-/** 
   Temporary way to set the version of the app
   0 : Netflix,
   1 : Youtube
 **/
 var version = 1;
 
+/** 
+
+PageAction shenanigans 
+
+**/
+
 // Netflix
 var netflix = {
-	conditions : [
-		new chrome.declarativeContent.PageStateMatcher({
-			pageUrl : {
-				hostEquals : 'www.netflix.com',
-				schemes : ['https'],
-				pathPrefix : '/watch/'
-			}
-		})
-	],
-	actions : [new chrome.declarativeContent.ShowPageAction()]
+  conditions : [
+    new chrome.declarativeContent.PageStateMatcher({
+      pageUrl : {
+        hostEquals : 'www.netflix.com',
+        schemes : ['https'],
+        pathPrefix : '/watch/'
+      }
+    })
+  ],
+  actions : [new chrome.declarativeContent.ShowPageAction()]
 };
 
 // Youtube
 var youtube = {
-	conditions : [
-		new chrome.declarativeContent.PageStateMatcher({
-			pageUrl : {
-				hostEquals : 'www.youtube.com',
-				schemes : ['https'],
-				pathPrefix : '/watch'
-			}
-		})
-	],
-	actions : [new chrome.declarativeContent.ShowPageAction()]
+  conditions : [
+    new chrome.declarativeContent.PageStateMatcher({
+      pageUrl : {
+        hostEquals : 'www.youtube.com',
+        schemes : ['https'],
+        pathPrefix : '/watch'
+      }
+    })
+  ],
+  actions : [new chrome.declarativeContent.ShowPageAction()]
 };
 
 var rules = [netflix, youtube]
 
 chrome.runtime.onInstalled.addListener(function (details) {
-	chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {
-		chrome.declarativeContent.onPageChanged.addRules([rules[version]]);
-	});
+  chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {
+    chrome.declarativeContent.onPageChanged.addRules([rules[version]]);
+  });
 });
 
 /**
@@ -130,10 +130,6 @@ Manager.prototype.handleUIMsg = function(request, sender, sendResponse) {
       sendResponse(this.activated);
       this.activated = true;
       break;
-      
-    // case rtype.IS_ACTIVATED:
-      // sendResponse(this.activated);
-      // break;
       
     case rtype.CREATE_SESSION:
       this.createSession(sendResponse);

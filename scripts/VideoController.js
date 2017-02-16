@@ -134,7 +134,6 @@ VideoController.prototype.seek = function(time) {
 }
 
 VideoController.prototype.messageHandler = function(request, sender, sendResponse) {
-  
   var currentTime = this.video.currentTime
   if (currentTime < request.time - 0.5 || currentTime > request.time + 0.5) { 
     this.seek(request.time)
@@ -142,9 +141,7 @@ VideoController.prototype.messageHandler = function(request, sender, sendRespons
   
   if (request.state == utils.state.PLAYING) {
     this.play()
-  }
-  
-  else if (request.state == utils.state.PAUSED) {
+  } else if (request.state == utils.state.PAUSED) {
     this.pause()
   }
 }

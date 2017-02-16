@@ -91,21 +91,6 @@ Credentials.prototype.initUI = function() {
       }
     }
   }.bind(this));
-  
-  // Check if user is in session
-  // getSession(function(session) {
-    // if (session) {
-      // this.session = session;
-      // this.displayCurrentSession(this.session)
-    // }
-  // }.bind(this));
-  
-  // Check if extension was already activated by user
-  // isActivated(function(isActivated){
-    // if (isActivated) {
-      // this.activated();
-    // }
-  // }.bind(this));
     
   // Add listeners
   this.signInButton.addEventListener('click', this.startSignIn.bind(this), false);
