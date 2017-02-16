@@ -1,18 +1,10 @@
 # Priority
-o Fix seek listener to listen even if mouse is not over scrubber bar
-o Fix seek listener when seeking while the video is playing (currently thinks the video is paused)
-o Maybe use play-pause button as indicator of the video state instead 
-o OR keep my own variable to do that... Less safe
-o Fix reset when user leaves title page (i.e. goes back to browse)
 
 # Optional
-o Change icon to heart
+x Change icon to heart
 o Empty heart when off
 o Full heart when on
-o Check server to see if user is already connected
 o Test the response time to do: Netflix->background->server->background->Netflix
-o Refactor VideoController.playButtonHandler and scrubberHandler into one function
-o Add listener to child_removed when sessions are removed to update the sessions list
 
 # Done
 x Make Object Session
@@ -27,3 +19,6 @@ x Find a better way to manage actions
 x Add listener to participants when session is created that kills the session when the owner leaves/no participants are left
 ? Fix precision
 x Fix paragraph seek and/or scrubber hidden seek
+x Fix seek listener to listen even if mouse is not over scrubber bar
+x Fix seek listener when seeking while the video is playing (currently thinks the video is paused)
+x Fix reset when user leaves title page (i.e. goes back to browse)
