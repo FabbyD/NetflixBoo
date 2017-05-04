@@ -4,16 +4,8 @@ Netflix and chill across seas.
 
 Side project to learn web programming, user communication, backend code, chrome extensions.
 
-## Introduction
-
-This app follows the Model-View-Controller architecture.
-
-**The video controller** listens and controls the video player.
-
-**The server** is all Firebase. Makes my life easier. This is what allows two or more users to synchronize. Also takes care of user authentification.
-
-**The controller** (aka background.js) communicates with both models and the view. Since all server communication goes through the controller, other aspects of the app can easily be modified without major refactoring.
+Playing, pausing and seeking is synchronized between users making you feel as if you were in the same room using the same remote.
 
 #### Wanted
-- Remove Firebase entirely and build my own server using Ruby on Rails.
+- Remove Firebase entirely and build my own server using Ruby on Rails or similar backend code
 - Something cool: generalized version to work with other websites (potentially any website)
