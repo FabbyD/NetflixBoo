@@ -8,9 +8,10 @@
 /** 
   Temporary way to set the version of the app
   0 : Netflix,
-  1 : Youtube
+  1 : Youtube,
+  2: 123movies
 **/
-var version = 1;
+var version = 0;
 
 /** 
 
@@ -46,7 +47,21 @@ var youtube = {
   actions : [new chrome.declarativeContent.ShowPageAction()]
 };
 
-var rules = [netflix, youtube]
+// 123movies
+var movies = {
+  conditions : [
+    new chrome.declarativeContent.PageStateMatcher({
+      pageUrl : {
+        hostEquals : '123movies.is',
+        schemes : ['https'],
+        pathPrefix : '/film'
+      }
+    })
+  ],
+  actions : [new chrome.declarativeContent.ShowPageAction()]
+};
+
+var rules = [netflix, youtube, movies]
 
 chrome.runtime.onInstalled.addListener(function (details) {
   chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {
@@ -71,22 +86,17 @@ function Manager() {
 }
 
 // Sets up shortcuts to Firebase features and initiate firebase auth.
-// Stole from github.com/friendlychat
 Manager.prototype.initFirebase = function() {
   // Shortcuts to Firebase SDK features.
   this.auth = firebase.auth();
   this.database = firebase.database();
   this.storage = firebase.storage();
   // Initiates Firebase auth and listen to auth state changes.
-  this.auth.onAuthStateChanged(this.onAuthStateChanged.bind(this));
+  //this.auth.onAuthStateChanged(this.onAuthStateChanged.bind(this));
 };
 
-// Triggers when the auth state change for instance when the user signs-in or signs-out.
-Manager.prototype.onAuthStateChanged = function(user) {
-  console.log('User state change detected from the Background script:', user);
-}
-
 Manager.prototype.messageHandler = function(request, sender, sendResponse) {
+  // Handler for messages from controller and pop-up UI
   if (sender.tab) {
     this.handleControllerMsg(request, sender, sendResponse)
   }
@@ -100,7 +110,6 @@ Manager.prototype.handleControllerMsg = function(request, sender, sendResponse) 
     console.log('Video ' + request.state + ' at ' + request.time);
     this.updateFirebase(request.state, request.time);
   }
-
   else if (request.state == utils.state.UNLOADED) {
     console.log('Netflix unloaded');
     this.unloadApp();
@@ -112,10 +121,10 @@ Manager.prototype.handleUIMsg = function(request, sender, sendResponse) {
   
   switch(request.greeting) {
     case rtype.INIT_UI:
-      var session = !this.session ? null : {
+      var session = this.session ? {
           key : this.session.key,
           owner : this.session.owner
-        }
+        } : null
       var response = {
         isActive : this.activated,
         session  : session
@@ -238,8 +247,7 @@ Manager.prototype.connected = function() {
 }
 
 Manager.prototype.trySending = function(state, time) {
-  console.log('Trying to send new action');
-  var checkFn = 
+  console.log('Trying to send new action'); 
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
     if (tabs[0] && utils.onPage[version](tabs[0].url)) {
       chrome.tabs.sendMessage(tabs[0].id, {state : state, time : time});
@@ -249,7 +257,7 @@ Manager.prototype.trySending = function(state, time) {
   }.bind(this));
   this.tryCount += 1;
   
-  if (this.tryCount >= 120) { // Give up after a minute
+  if (this.tryCount >= 120) {
     console.log("You're too slow! --Sonic")
     clearInterval(this.intervalId);
     this.invervalId = null;

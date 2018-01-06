@@ -7,10 +7,10 @@
 /** 
   Temporary way to set the version of the app
   0 : Netflix,
-  1 : Youtube
+  1 : Youtube and general
 **/
 var version = 1
-var controllerFiles = ['VideoController.js', 'YoutubeController.js']
+var controllerFiles = ['netflix_controller.js', 'youtube_controller.js']
  
 /**
  * Credentials constructor

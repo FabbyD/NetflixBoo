@@ -23,7 +23,6 @@ function VideoController() {
 }
 
 VideoController.prototype.showControls = function() {
-  // I don't think getting the actual position of the scrubber is necessary but whatever
   var rect = this.scrubber.getBoundingClientRect()
   var x = rect.left + rect.width/2
   var y = rect.top + rect.height/2
@@ -58,7 +57,6 @@ VideoController.prototype.playButtonHandler = function(e) {
     var paused = this.video.paused;
     var state = (paused ? utils.state.PAUSED : utils.state.PLAYING);
     var time = this.video.currentTime;
-    
     this.sendMessage(state, time);
   }
 }
@@ -69,9 +67,7 @@ VideoController.prototype.scrubberHandler = function(e) {
     var paused = this.video.paused;
     var state = (paused ? utils.state.PAUSED : utils.state.PLAYING);
     var time = this.pos2time(e.clientX);
-    
     console.log('Seeked at ' + time);
-    
     this.sendMessage(state, time);
   }
 }
@@ -85,7 +81,6 @@ VideoController.prototype.time2pos = function(time) {
   // Limit to scrubber dimensions
   pos = pos >= rect.right ? rect.right : pos
   pos = pos <= rect.left  ? rect.left  : pos
-  
   return pos;
 }
 
@@ -102,9 +97,7 @@ VideoController.prototype.pos2time = function(posX) {
 
 VideoController.prototype.seek = function(time) {
   console.log('Seeking to ' + time)
-  
   this.showControls();
-  
   setTimeout(function() {
     var handle = this.handle;
     var rect = handle.getBoundingClientRect();

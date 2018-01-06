@@ -1,6 +1,6 @@
 /******************************************************************************
  * File: utilities.js
- * Desc: Various utilities to be used in Netflix Boo
+ * Desc: Various helpers to be used in Netflix Boo
  * Author: Fabrice Dugas
  *****************************************************************************/
 
@@ -18,7 +18,6 @@ utils.popup = {}
 utils.popup.requests = {
   INIT_UI        : 1,
   ACTIVATE       : 2,
-  // IS_ACTIVATED   : 2,
   CREATE_SESSION : 3,
   JOIN_SESSION   : 4,
   LEAVE_SESSION  : 5,
@@ -35,4 +34,9 @@ var onYoutube = function(url) {
   return url.match(/https:\/\/www.youtube.com\/watch/)
 }
 
-utils.onPage = [onNetflix, onYoutube];
+// Check if current url is Youtube
+var onMovies = function(url) {
+  return url.match(/https:\/\/123movies.is\/film/)
+}
+
+utils.onPage = [onNetflix, onYoutube, onMovies];
