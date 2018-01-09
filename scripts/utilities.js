@@ -7,10 +7,11 @@
 var utils = {};
 
 utils.state = {
-   PLAYING : 'playing',
-   PAUSED : 'paused',
-   CONNECTED : 'connected',
-   UNLOADED : 'unloaded'
+  INIT : 'init',
+  PLAYING : 'playing',
+  PAUSED : 'paused',
+  CONNECTED : 'connected',
+  UNLOADED : 'unloaded'
 };
 
 utils.popup = {}
@@ -40,3 +41,7 @@ var onMovies = function(url) {
 }
 
 utils.onPage = [onNetflix, onYoutube, onMovies];
+
+utils.isVideoAction = function(state) {
+  return state == utils.state.PLAYING || state == utils.state.PAUSED;
+}
