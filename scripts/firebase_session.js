@@ -9,26 +9,26 @@
 function FirebaseSession(key) {
   this._ref = null;
   this._userRef = null;
+  this.owner = null;
   
   if (key) {
     this._ref = firebase.database().ref('sessions/' + key);
-  } else {
-    this._new();
   }
-  
-  this.join();
-  
-  // Add listener to video state
-  this._ref.child('video').on('value', this.videoListener.bind(this));
-  
-  // Kill the session if there are no participants left
-  // TODO Change to be specific to child 'participants'
-  this._ref.on('child_removed', this.kill.bind(this))
+}
+
+FirebaseSession.loadLast = function(limit, callback) {
+  var ref = firebase.database().ref('sessions');
+  ref.limitToLast(limit).on('child_added', callback); 
+}
+
+FirebaseSession.prototype.getKey = function() {
+  return this._ref.key;
 }
 
 // Create a new session
-FirebaseSession.prototype._new = function() {
+FirebaseSession.prototype.create = function() {
   var currentUser = firebase.auth().currentUser;
+  this.owner = currentUser.displayName;
   this._ref = firebase.database().ref('sessions').push();
   var date = new Date();
   this._ref.set({
@@ -67,13 +67,12 @@ FirebaseSession.prototype.join = function(onSuccess) {
     console.error('Error joining the session', error);
   });
   
-  // if user is first to join, set him to last user
-  // this._ref.child('video').once('value', function(videoSnapshot) {
-    // var val = videoSnapshot.val();
-    // if (val.user == utils.state.INIT) {
-      // this._ref.child('video').child('user').set(this._userRef.key);
-    // }
-  // }.bind(this));
+  // Add listener to video state
+  this._ref.child('video').on('value', this.videoListener.bind(this));
+  
+  // Kill the session if there are no participants left
+  // FIXME Change to be specific to child 'participants'
+  this._ref.on('child_removed', this.kill.bind(this));
 }
 
 // Remove the current user from the session

@@ -3,7 +3,7 @@
 <head>
   <meta charset=utf-8 />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Google Sign In</title>
+  <title>Netflix Boo</title>
   
   <link rel="stylesheet" href="../styles/bootstrap.min.css">
   <script src="../scripts/jquery-3.1.1.min.js"></script>
@@ -11,39 +11,37 @@
   
   <link rel="stylesheet" href="../styles/main.css">
   <script src="https://www.gstatic.com/firebasejs/3.4.0/firebase.js"></script>
+  <script src="../scripts/version.js"></script>
   <script src="../scripts/utilities.js"></script>
   <script src="../scripts/initialize_firebase.js"></script>
+  <script src="../scripts/requester.js"></script>
   <script src="../scripts/credentials.js"></script>
+  <script src="../scripts/views/initial_view.js"></script>
+  <script src="../scripts/views/inactive_view.js"></script>
+  <script src="../scripts/views/signin_view.js"></script>
+  <script src="../scripts/views/disconnected_view.js"></script>
+  <script src="../scripts/views/connected_view.js"></script>
 </head>
 <body>
   <div class="main-container">
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-xs-6">
-          <h3>Netflix Boo</h3>
-        </div>
-        <div class="col-xs-6">
-          <div class="pull-right user-details">
-            <span class="user-name"></span>
-            <button type="button" class="btn btn-default btn-sm sign-in-button">Sign in</button>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-xs-12" align="center">
-          <button type="button" class="btn btn-primary btn-lg activate-button">Activate</button>
-        </div>
-      </div>
+    <div class="boo-header">
+      <img id='logo' src='../images/logo.png'>
+      <button type="button" class="btn btn-primary btn-lg activate-button">Activate</button>
+      <span class="user-name" style='display: none'></span>
+      <button type="button" class="btn btn-default btn-sm sign-in-button" style="display: none">Sign in</button>
     </div>
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-xs-12">
-          <button type="button" class="btn btn-primary create-session-button" >New session</button>
+    <div class="sessions-container">
+      <div class="sessions-list">
+        <div class="session" style="text-align: center">
+          <img class="session-owner-picture" src="../images/pacman64.png" alt="Owner's picture">
+          <span class="session-owner-name vertical-align">OGBronx</span>
+          <button type="button" class="btn btn-warning session-button">Join</button>
+          <div style="clear: both">
+        </div>
         </div>
       </div>
-      <div class="sessions-container"></div>
+      <button type="button" class="btn btn-primary create-session-button">Create</button>
     </div>
   </div>
-  
 </body>
 </html>

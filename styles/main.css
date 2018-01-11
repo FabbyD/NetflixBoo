@@ -2,8 +2,7 @@ html, body {
   font-family: 'Roboto', 'Helvetica', sans-serif;
 }
 body {
-  width: 400px;
-  min-height: 400px;
+  width: 300px;
   margin: 0;
   padding: 5px;
 }
@@ -27,20 +26,24 @@ div[class^="container"] {
 .mdl-layout__header-row {
   padding: 0;
 }
+.boo-header {
+  display: block;
+}
 .user-details-container {
   margin-top: 20px;
   line-height: 25px;
 }
-.owner-picture-container {
-  width: 40px;
-  height: 40px;
+.session-owner-picture {
+  max-width: 40px;
+  float: left;
 }
-.owner-picture {
-  max-width: 100%;
-  max-height: 100%;
+.session-owner-name {
 }
-.session-container {
-  
+.session-button {
+  float: right;
+}
+.session {
+  height: auto;
 }
 .vertical-align {
   display: flex;
@@ -52,18 +55,15 @@ div[class^="container"] {
   align-items: center;
   justify-content: center;
 }
-
-#sign-in-status {
-  font-weight: bold;
-}
 .activate-button {
-}
-.sign-in-button {
-  display: none;
 }
 .create-session-button {
   margin-top: 5px;
-  display: none;
+  float: right;
+  display: block;
+}
+.sign-in-button {
+  float: right;
 }
 .user-details {
   display: flex;
@@ -71,7 +71,18 @@ div[class^="container"] {
 }
 .user-name {
   padding-right: 5px;
-  display: none;
+}
+.boo-logo {
+  background: url('../images/logo.png') no-repeat;
+  background-size: 40px;
+  padding-left: 50px;
+  line-height: 40px;
+}
+.session {
+}
+
+#logo {
+  width: 60px;
 }
 
 pre {
@@ -81,10 +92,4 @@ pre {
 code {
   white-space: pre-wrap;
   word-break: break-all;
-}
-h3 {
-  background: url('../images/logo.png') no-repeat;
-  background-size: 40px;
-  padding-left: 50px;
-  line-height: 40px;
 }

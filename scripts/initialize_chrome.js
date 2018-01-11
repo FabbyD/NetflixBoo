@@ -10,16 +10,10 @@
  * Date: 07/01/2017
  *****************************************************************************/
 
-/** 
-  Temporary way to set the version of the app
-  0 : Netflix,
-  1 : Youtube,
-  2: 123movies
-**/
-var version = 0;
+var rules = [];
 
 // Netflix
-var netflix = {
+rules[VERSION_NETFLIX] = {
   conditions : [
     new chrome.declarativeContent.PageStateMatcher({
       pageUrl : {
@@ -33,7 +27,7 @@ var netflix = {
 };
 
 // Youtube
-var youtube = {
+rules[VERSION_YOUTUBE] = {
   conditions : [
     new chrome.declarativeContent.PageStateMatcher({
       pageUrl : {
@@ -47,7 +41,7 @@ var youtube = {
 };
 
 // 123movies
-var movies = {
+rules[VERSION_MOVIES] = {
   conditions : [
     new chrome.declarativeContent.PageStateMatcher({
       pageUrl : {
@@ -59,8 +53,6 @@ var movies = {
   ],
   actions : [new chrome.declarativeContent.ShowPageAction()]
 };
-
-var rules = [netflix, youtube, movies]
 
 chrome.runtime.onInstalled.addListener(function (details) {
   chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {

@@ -1,16 +1,25 @@
 /******************************************************************************
- * File: VideoController.js
+ * File: NetflixController.js
  * Desc: Handles interaction with Netflix video player
  * Author: Fabrice Dugas
  *****************************************************************************/
 
-function VideoController() {
+function NetflixController() {
   // Shortcuts to DOM elements
-  this.player = document.getElementById('netflix-player');
+  this.player = document.getElementById('nfp nf-player-container');
   this.video = document.getElementsByTagName('video')[0];
-  this.playButton = document.getElementsByClassName("player-control-button player-play-pause")[0];
-  this.scrubber = document.getElementById('scrubber-component');
-  this.handle = document.getElementsByClassName('player-scrubber-handle')[0];
+  this.scrubber = document.getElementsByClassName('scrubber-bar')[0];
+  this.handle = document.getElementsByClassName('scrubber-head')[0];
+  
+  this.playButton = document.getElementsByClassName("button-nfplayerPlay")[0];
+  if (!this.playButton) {
+    console.log('Trying with pause button')
+    this.playButton = document.getElementsByClassName("button-nfplayerPause")[0];
+  }
+  
+  if (!this.playButton) {
+    console.error('Could not find the play button');
+  }
   
   // Play button
   this.playButton.addEventListener('click', this.playButtonHandler.bind(this));
@@ -22,7 +31,7 @@ function VideoController() {
   chrome.runtime.onMessage.addListener(this.messageHandler.bind(this));
 }
 
-VideoController.prototype.showControls = function() {
+NetflixController.prototype.showControls = function() {
   var rect = this.scrubber.getBoundingClientRect()
   var x = rect.left + rect.width/2
   var y = rect.top + rect.height/2
@@ -30,12 +39,12 @@ VideoController.prototype.showControls = function() {
   this.scrubber.dispatchEvent(move)
 }
 
-VideoController.prototype.hideControls = function() {
+NetflixController.prototype.hideControls = function() {
   var move = createFakeMouseEvent("mousemove", 0, 0);
   this.player.dispatchEvent(move);
 }
 
-VideoController.prototype.play = function() {
+NetflixController.prototype.play = function() {
   var paused = this.video.paused;
   if (paused){
     var click = createFakeMouseEvent('click', 0, 0);
@@ -43,7 +52,7 @@ VideoController.prototype.play = function() {
   }
 }
 
-VideoController.prototype.pause = function() {
+NetflixController.prototype.pause = function() {
   var paused = this.video.paused;
   if (!paused){
     var click = createFakeMouseEvent('click', 0, 0);
@@ -51,7 +60,7 @@ VideoController.prototype.pause = function() {
   }
 }
 
-VideoController.prototype.playButtonHandler = function(e) {
+NetflixController.prototype.playButtonHandler = function(e) {
   // Verify that it is not a simulated click
   if (!e.fake) {
     var paused = this.video.paused;
@@ -61,7 +70,7 @@ VideoController.prototype.playButtonHandler = function(e) {
   }
 }
 
-VideoController.prototype.scrubberHandler = function(e) {
+NetflixController.prototype.scrubberHandler = function(e) {
   // Verify that it is not a simulated click
   if (!e.fake) {
     var paused = this.video.paused;
@@ -73,7 +82,7 @@ VideoController.prototype.scrubberHandler = function(e) {
 }
 
 // Convert time in seconds to a position on the scrubber
-VideoController.prototype.time2pos = function(time) {
+NetflixController.prototype.time2pos = function(time) {
   var rect = this.scrubber.getBoundingClientRect();
   var videoLength = this.video.seekable.end(0);
   var pos = rect.left + time/videoLength*rect.width;
@@ -85,7 +94,7 @@ VideoController.prototype.time2pos = function(time) {
 }
 
 // Convert a position on the scrubber to a time in seconds
-VideoController.prototype.pos2time = function(posX) {
+NetflixController.prototype.pos2time = function(posX) {
   var rect = this.scrubber.getBoundingClientRect();
   var offsetLeft = rect.left;
   var width = rect.width;
@@ -95,7 +104,7 @@ VideoController.prototype.pos2time = function(posX) {
   return time;
 }
 
-VideoController.prototype.seek = function(time) {
+NetflixController.prototype.seek = function(time) {
   console.log('Seeking to ' + time)
   this.showControls();
   setTimeout(function() {
@@ -126,7 +135,7 @@ VideoController.prototype.seek = function(time) {
   }.bind(this),10);
 }
 
-VideoController.prototype.messageHandler = function(request, sender, sendResponse) {
+NetflixController.prototype.messageHandler = function(request, sender, sendResponse) {
   var currentTime = this.video.currentTime
   if (currentTime < request.time - 0.5 || currentTime > request.time + 0.5) { 
     this.seek(request.time)
@@ -139,17 +148,17 @@ VideoController.prototype.messageHandler = function(request, sender, sendRespons
   }
 }
 
-VideoController.prototype.sendMessage = function(state, time) {
+NetflixController.prototype.sendMessage = function(state, time) {
   chrome.runtime.sendMessage({state : state, time : time});
 }
 
 function initController(){
   var controller;
   var id = setInterval(function() {
-    var controls = document.getElementsByClassName('player-control-bar')[0];
+    var controls = document.getElementsByClassName('PlayerControls--container')[0];
     if (controls) {
       console.log('Netflix controls are ready');
-      controller = new VideoController();
+      controller = new NetflixController();
       controller.pause();
       clearInterval(id);
     }
@@ -185,5 +194,5 @@ function initController(){
 };
 
 // Initialize the controller when the script is injected
-console.log('videoController injected');
+console.log('netflix_controller.js injected');
 initController();

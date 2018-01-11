@@ -16,10 +16,7 @@ function createFakeMouseEvent(type, cx, cy) {
     clientX : cx,
     clientY : cy
   };
-  
   var evt = new MouseEvent(type, mouseEventInit)
-  
   evt.fake = true;
-  
   return evt;
 }

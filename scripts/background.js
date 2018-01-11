@@ -4,8 +4,8 @@
  * Author: Fabrice Dugas
  * Date: 07/01/2017
  *****************************************************************************/
-
-var AppController = {
+ 
+var controller = {
   activated : false,
   session : null,
   
@@ -29,10 +29,8 @@ var AppController = {
   },
   
   handleUIMsg : function(request, sender, sendResponse) {
-    var rtype = utils.popup.requests;
-    
-    switch(request.greeting) {
-      case rtype.INIT_UI:
+    switch(request.type) {
+      case requester.INIT_UI:
         var session = this.session ? {
             key : this.session.key,
             owner : this.session.owner
@@ -43,25 +41,29 @@ var AppController = {
         }
         sendResponse(response);
         break;
-        
-      case rtype.ACTIVATE:
+      
+      case requester.IS_ACTIVATED:
+        sendResponse(this.activated);
+        break;
+      
+      case requester.ACTIVATE:
         sendResponse(this.activated);
         this.activated = true;
         break;
         
-      case rtype.CREATE_SESSION:
+      case requester.CREATE_SESSION:
         this.createSession(sendResponse);
         break;
         
-      case rtype.JOIN_SESSION:
+      case requester.JOIN_SESSION:
         this.joinSession(request, sendResponse);
         break;
         
-      case rtype.LEAVE_SESSION:
+      case requester.LEAVE_SESSION:
         this.leaveSession(sendResponse);
         break;
         
-      case rtype.GET_SESSION:
+      case requester.GET_SESSION:
         var response = !this.session ? null : {
           key : this.session.key,
           owner : this.session.owner
@@ -77,8 +79,9 @@ var AppController = {
     
   createSession : function(sendResponse) {
     this.session = new FirebaseSession();
+    this.session.create();
     var farewell = {
-      key : this.session.key,
+      key : this.session.getKey(),
       owner : this.session.owner
     };
     sendResponse(farewell);
@@ -86,7 +89,6 @@ var AppController = {
 
   joinSession : function(request, sendResponse) {
     this.session = new FirebaseSession(request.sessionKey);
-    this.session.join();
   },
 
   leaveSession : function(callback) {
@@ -142,7 +144,7 @@ var AppController = {
 
 function initApp() {
   // start listening to messages from scripts
-  chrome.runtime.onMessage.addListener(AppController.messageListener.bind(AppController));
+  chrome.runtime.onMessage.addListener(controller.messageListener.bind(controller));
 }
 
 window.onload = initApp;
