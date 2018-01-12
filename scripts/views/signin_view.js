@@ -11,17 +11,13 @@ function SignInView() {
   this.signInButton = document.getElementsByClassName('sign-in-button')[0];
   this.signInButton.style.display = "inline";
   this.signInButton.disabled = false;
+  this.signInButton.textContent = 'Sign in';
   
-  this.ORIGINAL_IMG_URL = 'url("../../images/logo.png")';
-  this.LOADING_IMG_URL = 'url("../../images/pacman64-loading.gif")';
+  this.ORIGINAL_IMG_URL = "../images/logo.png";
+  this.LOADING_IMG_URL = "../images/pacman64-loading.gif";
   
-  if (credentials.isSignedIn()) {
-    this.nextState();
-  } else {
-    credentials.setOnAuthStateChanged(this.onAuthStateChanged.bind(this));
-  }
-  
-  this.signInButton.addEventListener('click', this.startSignIn.bind(this));
+  credentials.setOnAuthStateChanged(this.onAuthStateChanged.bind(this));
+  this.signInButton.onclick = this.startSignIn.bind(this);
 }
 
 SignInView.prototype.startSignIn = function() {
@@ -31,24 +27,22 @@ SignInView.prototype.startSignIn = function() {
 }
 
 SignInView.prototype.onAuthStateChanged = function(user) {
-  // Restore original image
   this.logo.src = this.ORIGINAL_IMG_URL;
-  
   if (user) {
     // User is signed in
+    this.signInButton.textContent = 'Sign out';
     this.nextState();
-  } else {
-    // User is signed out
-    console.error('The app is in an invalid state.')
   }
 }
 
-SignInView.prototype.clean = function() { 
+SignInView.prototype.clean = function() {
+  credentials.setOnAuthStateChanged(null); // stop listening
 }
 
 SignInView.prototype.nextState = function() {
+  console.log('SignInView.nextState');
   this.clean();
-  requester.request(requester.GET_SESSION, function(session) {
+  requester.request({type: requester.GET_SESSION}, function(session) {
     if (session) {
       var state = new ConnectedView(session);
     } else {

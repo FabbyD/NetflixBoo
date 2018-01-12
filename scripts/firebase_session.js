@@ -18,15 +18,32 @@ function FirebaseSession(key) {
 
 FirebaseSession.loadLast = function(limit, callback) {
   var ref = firebase.database().ref('sessions');
-  ref.limitToLast(limit).on('child_added', callback); 
+  ref.limitToLast(limit).on('child_added', function(snapshot) {
+    var session = {
+      key: snapshot.key,
+      owner: snapshot.val().owner
+    };
+    callback(session);
+  });
 }
 
-FirebaseSession.prototype.getKey = function() {
-  return this._ref.key;
+FirebaseSession.stopListening = function() {
+  var ref = firebase.database().ref('sessions');
+  ref.off();
+}
+
+FirebaseSession.prototype.serialize = function(callback) {
+  this._ref.once('value', function(snapshot) {
+    var serialized = {
+      key: snapshot.key,
+      owner: snapshot.val().owner
+    };
+    callback(serialized);
+  });
 }
 
 // Create a new session
-FirebaseSession.prototype.create = function() {
+FirebaseSession.prototype.create = function(join, onSuccess) {
   var currentUser = firebase.auth().currentUser;
   this.owner = currentUser.displayName;
   this._ref = firebase.database().ref('sessions').push();
@@ -43,7 +60,10 @@ FirebaseSession.prototype.create = function() {
     })
     .then(function() {
       console.log('New session created!')
-    })
+      if (join) {
+        this.join(onSuccess);
+      }
+    }.bind(this))
     .catch(function(error) {
       console.error('Error creating new session.', error)
     })
@@ -61,8 +81,8 @@ FirebaseSession.prototype.join = function(onSuccess) {
   })
   .then(function() {
     console.log('User joined session');
-    if (onSuccess) onSuccess();
-  })
+    if (onSuccess) this.serialize(onSuccess);
+  }.bind(this))
   .catch(function(error) {
     console.error('Error joining the session', error);
   });
@@ -94,7 +114,7 @@ FirebaseSession.prototype.videoListener = function(video) {
   var val = video.val();
   console.log('Received new video state:', val);
   if (val && val.user != this._userRef.key && utils.isVideoAction(val.state)) {
-    AppController.doAction(val.state, val.lastUpdatedTime);
+    controller.doAction(val.state, val.lastUpdatedTime);
   }
 }
 

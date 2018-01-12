@@ -17,6 +17,7 @@ var controller = {
     else {
       this.handleUIMsg(request, sender, sendResponse)
     }
+    return request.async;
   },
   
   handleControllerMsg : function(request, sender, sendResponse) {
@@ -56,7 +57,7 @@ var controller = {
         break;
         
       case requester.JOIN_SESSION:
-        this.joinSession(request, sendResponse);
+        this.joinSession(request.data, sendResponse);
         break;
         
       case requester.LEAVE_SESSION:
@@ -64,11 +65,9 @@ var controller = {
         break;
         
       case requester.GET_SESSION:
-        var response = !this.session ? null : {
-          key : this.session.key,
-          owner : this.session.owner
+        if (this.session) {
+          this.session.serialize(sendResponse);
         }
-        sendResponse(response);
         break;
         
       default:
@@ -79,16 +78,12 @@ var controller = {
     
   createSession : function(sendResponse) {
     this.session = new FirebaseSession();
-    this.session.create();
-    var farewell = {
-      key : this.session.getKey(),
-      owner : this.session.owner
-    };
-    sendResponse(farewell);
+    this.session.create(true, sendResponse);
   },
 
-  joinSession : function(request, sendResponse) {
-    this.session = new FirebaseSession(request.sessionKey);
+  joinSession : function(key, sendResponse) {
+    this.session = new FirebaseSession(key);
+    this.session.join(sendResponse);
   },
 
   leaveSession : function(callback) {

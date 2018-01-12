@@ -11,7 +11,7 @@ function InactiveView() {
   this.activateButton = document.getElementsByClassName('activate-button')[0];
   
   // Check if extension was already activated by user
-  requester.request(requester.IS_ACTIVATED, function(isActivated) {
+  requester.request({type: requester.IS_ACTIVATED}, function(isActivated) {
     this.activateButton.disabled = isActivated;
     if (isActivated) {
       this.nextState();
@@ -24,7 +24,7 @@ function InactiveView() {
 InactiveView.prototype.activate = function() {
   // FIXME Hackish way to use the same controller for 2 versions
   var controllerFiles = ['netflix_controller.js', 'youtube_controller.js', 'youtube_controller.js'];
-  requester.request(requester.ACTIVATE, function() {
+  requester.request({type: requester.ACTIVATE}, function() {
     var controllerFile = controllerFiles[version];
     chrome.tabs.executeScript(null, {file: "./scripts/utilities.js"});
     chrome.tabs.executeScript(null, {file: "./scripts/mouse_simulator.js"});

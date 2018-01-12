@@ -16,6 +16,8 @@
   <script src="../scripts/initialize_firebase.js"></script>
   <script src="../scripts/requester.js"></script>
   <script src="../scripts/credentials.js"></script>
+  <script src="../scripts/firebase_session.js"></script>
+  <script src="../scripts/views/templates.js"></script>
   <script src="../scripts/views/initial_view.js"></script>
   <script src="../scripts/views/inactive_view.js"></script>
   <script src="../scripts/views/signin_view.js"></script>
@@ -30,17 +32,10 @@
       <span class="user-name" style='display: none'></span>
       <button type="button" class="btn btn-default btn-sm sign-in-button" style="display: none">Sign in</button>
     </div>
-    <div class="sessions-container">
-      <div class="sessions-list">
-        <div class="session" style="text-align: center">
-          <img class="session-owner-picture" src="../images/pacman64.png" alt="Owner's picture">
-          <span class="session-owner-name vertical-align">OGBronx</span>
-          <button type="button" class="btn btn-warning session-button">Join</button>
-          <div style="clear: both">
-        </div>
-        </div>
-      </div>
-      <button type="button" class="btn btn-primary create-session-button">Create</button>
+    <div class="sessions-container" style="display: none">
+      <div class="sessions-list"></div>
+      <button type="button" class="btn btn-primary create-session-button" style="display: none">Create</button>
+      <div class="clear"></div>
     </div>
   </div>
 </body>

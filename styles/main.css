@@ -2,7 +2,7 @@ html, body {
   font-family: 'Roboto', 'Helvetica', sans-serif;
 }
 body {
-  width: 300px;
+  width: 400px;
   margin: 0;
   padding: 5px;
 }
@@ -33,6 +33,10 @@ div[class^="container"] {
   margin-top: 20px;
   line-height: 25px;
 }
+.sessions-container {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
 .session-owner-picture {
   max-width: 40px;
   float: left;
@@ -40,7 +44,7 @@ div[class^="container"] {
 .session-owner-name {
 }
 .session-button {
-  float: right;
+  /* float: right; */
 }
 .session {
   height: auto;
@@ -58,7 +62,6 @@ div[class^="container"] {
 .activate-button {
 }
 .create-session-button {
-  margin-top: 5px;
   float: right;
   display: block;
 }
@@ -79,6 +82,10 @@ div[class^="container"] {
   line-height: 40px;
 }
 .session {
+  text-align: center;
+}
+.clear {
+  clear: both;
 }
 
 #logo {

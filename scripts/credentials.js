@@ -1,7 +1,9 @@
 var credentials = {
+  auth: firebase.auth(),
+  
   getCurrentUser : function() {
     return firebase.auth.currentUser;
-  }
+  },
   
   isSignedIn : function() {
     return !!this.getCurrentUser();
@@ -11,12 +13,12 @@ var credentials = {
     this._onAuthStateChanged = callback;
   },
   
-  _onAuthStateChanged : function(user) {
-  
-  },
+  _onAuthStateChanged : null,
   
   onAuthStateChanged : function(user) {
-    _onAuthStateChanged(user);
+    if (this._onAuthStateChanged) {
+      this._onAuthStateChanged(user);
+    }
   },
   
   startAuth : function(interactive) {
@@ -41,5 +43,11 @@ var credentials = {
         console.error('The OAuth Token was null');
       }
     }.bind(this));
+  },
+  
+  signOut : function(){
+    this.auth.signOut();
   }
 }
+
+credentials.auth.onAuthStateChanged(credentials.onAuthStateChanged.bind(credentials));
