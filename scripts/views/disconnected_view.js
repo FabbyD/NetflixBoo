@@ -49,7 +49,12 @@ DisconnectedView.prototype.loadSessions = function() {
       };
       requester.request(options, this.joinedSession.bind(this));
     }.bind(this));
-  }.bind(this)); 
+  }.bind(this));
+  
+  FirebaseSession.onRemoveSession(function(session) {
+    var div = document.getElementById(session.key);
+    div.parentElement.removeChild(div);
+  });
 }
 
 DisconnectedView.prototype.createSession = function() {

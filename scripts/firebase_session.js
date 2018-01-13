@@ -10,6 +10,7 @@ function FirebaseSession(key) {
   this._ref = null;
   this._userRef = null;
   this.owner = null;
+  this._onRemoveSession = null;
   
   if (key) {
     this._ref = firebase.database().ref('sessions/' + key);
@@ -25,6 +26,11 @@ FirebaseSession.loadLast = function(limit, callback) {
     };
     callback(session);
   });
+}
+
+FirebaseSession.onRemoveSession = function(callback) {
+  var ref = firebase.database().ref('sessions');
+  ref.on('child_removed', callback);
 }
 
 FirebaseSession.stopListening = function() {
