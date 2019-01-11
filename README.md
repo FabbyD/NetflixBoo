@@ -2,7 +2,7 @@ Netflix Boo
 ------------------------------
 Netflix and chill across seas.
 
-Side project to learn web programming, user communication, backend code, chrome extensions.
+Side project to actually just netflix and chill with my girlfriend remotely.
 
 Playing, pausing and seeking is synchronized between users making you feel as if you were in the same room using the same remote.
 
